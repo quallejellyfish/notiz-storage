@@ -67,7 +67,7 @@ app.get("/api/data", (req, res) => {
 });
 
 app.post("/api/add", async (req, res) => {
-  const { payload, newData } = req.body;
+  const { parentId, newData } = req.body;
 
   function addChildToTree(node, targetId, dataToAdd) {
     if (node.id === targetId) {
@@ -93,13 +93,13 @@ app.post("/api/add", async (req, res) => {
   } catch (err) {
     console.error(
       "Speicherungsfehler:",
-      err.response ? err.reponse.data : err.message,
+      err.response ? err.response.data : err.message,
     );
     res.status(500).json({ error: "Fehler bei der Speicherung nach GitHub" });
   }
 });
 
 fetchDataFromGithub().then(() => {
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => console.log(`Server läuft: ${PORT}`));
 });
