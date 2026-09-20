@@ -264,9 +264,10 @@
 
       function populateParentDropdown(node, prefix = "") {
         const select = document.getElementById("gen-parent");
-        const option = document.getElementById("option");
+        const option = document.createElement("option");
         option.value = node.id;
         option.innerText = prefix + node.title;
+        select.appendChild(option);
 
         if (node.children) {
           node.children.forEach((child) =>
@@ -283,7 +284,7 @@
 
         let currentFolder = db;
         for (let id of currentPath) {
-          if (currentFolder.cildren) {
+          if (currentFolder.children) {
             currentFolder = currentFolder.children.find((c) => c.id === id);
           }
         }
@@ -309,7 +310,7 @@
           });
         } else {
           tileContainer.innerHTML =
-            "<p color:#888;>Bis jetzt gibt es keine Notizen verfügbar. Fügen Sie eine neue Notiz zu.</p>";
+            "<p style='color:#888;'>Bis jetzt gibt es keine Notizen verfügbar. Fügen Sie eine neue Notiz zu.</p>";
         }
       }
 
@@ -328,7 +329,8 @@
         contentView.style.display = "block";
         contentTitle.innerText = data.title;
         contentDate.innerText = data.date || "";
-        contentBody.innerHTML = data.content || "<p>Noch kein Kontent verfügbar.</p>";
+        contentBody.innerHTML =
+          data.content || "<p>Noch kein Kontent verfügbar.</p>";
       }
 
       toggleGenBtn.onclick = () => {
@@ -384,8 +386,7 @@
           statusMsg.innerText = "Serververbindungsfehler";
         }
       }
-
-      loadData()
+      loadData();
     </script>
   </body>
 </html>
