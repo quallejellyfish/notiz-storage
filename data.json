@@ -1,5 +1,12 @@
 {
   "id": "root",
   "title": "Notiz Storage",
-  "children": []
+  "children": [
+    {
+      "id": "spa--1789919100780",
+      "title": "spaß",
+      "date": "1. märz",
+      "content": "etwas"
+    }
+  ]
 }
