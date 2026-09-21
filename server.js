@@ -8,7 +8,7 @@ const { prototype } = require("events");
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 app.use(express.static(__dirname));
 
@@ -66,9 +66,40 @@ app.get("/api/data", (req, res) => {
   res.json(currentData);
 });
 
+function idExists(node, targetId) {
+  if (node.id === targetId) return true;
+  if (node.children) {
+    for (let child of node.children) {
+      if (idExists(child, targetId)) return true;
+    }
+  }
+  return false;
+}
+
 app.post("/api/add", async (req, res) => {
   const { parentId, newData } = req.body;
 
+  if (!parentId || typeof parentId !== "string") {
+    return res.status(400).json({ error: "Ungültige Parent ID." });
+  }
+  if (
+    !newData ||
+    typeof newData !== "object" ||
+    !newData.title ||
+    !newData.id
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Ungültige Datenstruktur übermittelt." });
+  }
+
+  newData.title = newData.title.trim().substring(0, 100);
+  if (newData.date) newData.date = newData.date.trim().substring(0, 50);
+  if (newData.content) newData.content = newData.content.substring(0, 5000);
+
+  if (idExists(currentData, newData.id)) {
+    return res.status(400).json({ error: "Diese ID existiert bereits." });
+  }
   function addChildToTree(node, targetId, dataToAdd) {
     if (node.id === targetId) {
       if (!node.children) node.children = [];
