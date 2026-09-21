@@ -1,524 +1,133 @@
-<!doctype html>
-<html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Notiz Storage</title>
-    <link href="https://fonts.googleapis.com/css2?family=Garamond&family=Roboto&display=swap" rel="stylesheet">
-    <style>
-      :root {
-        --bg-color: #faf3e0;
-        --box-bg: #ffffff;
-        --border-color: #e0c68b;
-        --text-main: #333333;
-        --text-heading: #5b3924;
-        --text-subtitle: #7d5a4f;
-        --btn-bg: #a67c52;
-        --btn-hover: #855e3a;
+require("dotenv").config();
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: "10mb" }));
+
+app.use(express.static(__dirname));
+
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_REPO = process.env.GITHUB_REPO;
+const GITHUB_BRANCH = process.env.GITHUB_BRANCH || "main";
+const GITHUB_FILE_PATH = "data.json";
+
+let currentData = {};
+
+async function fetchDataFromGithub() {
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?ref=${GITHUB_BRANCH}`;
+    const response = await axios.get(url, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` },
+    });
+    const content = Buffer.from(response.data.content, "base64").toString(
+      "utf8",
+    );
+    currentData = JSON.parse(content);
+    console.log("Github Daten geladen");
+  } catch (err) {
+    console.error("Fehler beim Laden von Github:", err.message);
+    currentData = { id: "root", title: "Notiz Storage", children: [] };
+  }
+}
+
+async function saveDataToGithub(newData) {
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`;
+  const getResponse = await axios.get(`${url}?ref=${GITHUB_BRANCH}`, {
+    headers: { Authorization: `token ${GITHUB_TOKEN}` },
+  });
+  const sha = getResponse.data.sha;
+  const contentBase64 = Buffer.from(JSON.stringify(newData, null, 2)).toString(
+    "base64",
+  );
+  await axios.put(
+    url,
+    {
+      message: "Neuer Content!",
+      content: contentBase64,
+      sha: sha,
+      branch: GITHUB_BRANCH,
+    },
+    {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` },
+    },
+  );
+
+  currentData = newData;
+  console.log("Zu Github gespeichert");
+}
+
+app.get("/api/data", (req, res) => {
+  res.json(currentData);
+});
+
+function idExists(node, targetId) {
+  if (node.id === targetId) return true;
+  if (node.children) {
+    for (let child of node.children) {
+      if (idExists(child, targetId)) return true;
+    }
+  }
+  return false;
+}
+
+app.post("/api/add", async (req, res) => {
+  const { parentId, newData } = req.body;
+
+  if (!parentId || typeof parentId !== "string") {
+    return res.status(400).json({ error: "Ungültige Parent ID." });
+  }
+  if (
+    !newData ||
+    typeof newData !== "object" ||
+    !newData.title ||
+    !newData.id
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Ungültige Datenstruktur übermittelt." });
+  }
+
+  newData.title = newData.title.trim().substring(0, 100);
+  if (newData.date) newData.date = newData.date.trim().substring(0, 50);
+  if (newData.content) newData.content = newData.content.substring(0, 8000000);
+
+  if (idExists(currentData, newData.id)) {
+    return res.status(400).json({ error: "Diese ID existiert bereits." });
+  }
+  function addChildToTree(node, targetId, dataToAdd) {
+    if (node.id === targetId) {
+      if (!node.children) node.children = [];
+      node.children.push(newData);
+      return true;
+    }
+    if (node.children) {
+      for (let child of node.children) {
+        if (addChildToTree(child, targetId, dataToAdd)) return true;
       }
+    }
+    return false;
+  }
+  try {
+    const success = addChildToTree(currentData, parentId, newData);
+    if (!success) return res.status(404).json({ error: "Parent ID not found" });
+    await saveDataToGithub(currentData);
+    res.json({
+      success: true,
+      message: "Daten wurden hinzugefügt und gespeichert",
+    });
+  } catch (err) {
+    console.error(
+      "Speicherungsfehler:",
+      err.response ? err.response.data : err.message,
+    );
+    res.status(500).json({ error: "Fehler bei der Speicherung nach GitHub" });
+  }
+});
 
-      body {
-        font-family: 'Garamond', serif;
-        background-color: var(--bg-color);
-        color: var(--text-main);
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 100vh;
-      }
-
-      .top-nav {
-        width: 100%;
-        max-width: 1000px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 30px;
-        border-bottom: 2px solid var(--border-color);
-        padding-bottom: 15px;
-      }
-
-      .nav-center {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .back-btn {
-        font-family: 'Roboto', sans-serif;
-        font-size: 1em;
-        background-color: var(--btn-bg);
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        padding: 10px 20px;
-        cursor: pointer;
-        display: none;
-        transition: background-color 0.3s, transform 0.3s;
-        margin-top: 10px;
-      }
-
-      .back-btn:hover {
-        background-color: var(--btn-hover);
-        transform: translateY(-2px);
-      }
-
-      h1 {
-        margin: 0;
-        text-align: center;
-        font-weight: normal;
-        font-size: 2.5em;
-        color: var(--text-heading);
-      }
-
-      #breadcrumb {
-        font-family: 'Roboto', sans-serif;
-        color: var(--text-subtitle);
-        font-size: 1em;
-        margin-top: 5px;
-        text-align: center;
-      }
-
-      .tile-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
-        max-width: 1000px;
-        width: 100%;
-      }
-
-      .tile {
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 30px 20px;
-        min-width: 150px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 1.5em;
-        background-color: var(--box-bg);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        color: var(--text-heading);
-      }
-
-      .tile:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        background-color: #fdfbf7;
-      }
-
-      .tile.large { width: 100%; max-width: 300px; padding: 50px 20px; }
-      .tile.medium { width: 150px; height: 100px; display: flex; align-items: center; justify-content: center; }
-      .tile.small { width: 120px; height: 100px; display: flex; align-items: center; justify-content: center; }
-
-      .content-view {
-        display: none;
-        width: 100%;
-        max-width: 800px;
-        background-color: var(--box-bg);
-        padding: 40px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-        box-sizing: border-box;
-      }
-
-      .content-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 25px;
-        font-size: 1.8em;
-        border-bottom: 2px solid var(--border-color);
-        padding-bottom: 10px;
-        color: var(--text-heading);
-      }
-
-      .content-body {
-        font-family: 'Roboto', sans-serif;
-        font-size: 1.1em;
-        line-height: 1.6;
-        color: var(--text-main);
-      }
-
-      .content-body h3 {
-        color: var(--text-heading);
-        font-family: 'Garamond', serif;
-        margin-top: 20px;
-        margin-bottom: 10px;
-        border-bottom: 1px dashed var(--border-color);
-        padding-bottom: 5px;
-      }
-      .content-body ul {
-        padding-left: 20px;
-      }
-      .content-body li {
-        margin-bottom: 8px;
-      }
-
-      .generator-toggle {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: var(--btn-bg);
-        color: white;
-        border: none;
-        padding: 15px 25px;
-        border-radius: 5px;
-        font-family: 'Roboto', sans-serif;
-        font-size: 1.1em;
-        cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        transition: background-color 0.3s, transform 0.3s;
-      }
-
-      .generator-toggle:hover {
-        background-color: var(--btn-hover);
-        transform: translateY(-2px);
-      }
-
-      .generator-panel {
-        display: none;
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        width: 380px;
-        background: var(--box-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        z-index: 100;
-      }
-
-      .generator-panel h3 {
-        margin-top: 0;
-        margin-bottom: 15px;
-        color: var(--text-heading);
-        font-size: 1.5em;
-        text-align: center;
-        border-bottom: 1px dashed var(--border-color);
-        padding-bottom: 10px;
-      }
-
-      .generator-panel label {
-        font-family: 'Roboto', sans-serif;
-        font-size: 0.9em;
-        color: var(--text-subtitle);
-        display: block;
-        margin-bottom: 5px;
-      }
-
-      .generator-panel input,
-      .generator-panel textarea {
-        width: 100%;
-        margin-bottom: 15px;
-        padding: 10px;
-        box-sizing: border-box;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        font-family: 'Roboto', sans-serif;
-        font-size: 1em;
-      }
-
-      .generator-panel button {
-        width: 100%;
-        padding: 12px;
-        background-color: var(--btn-bg);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-family: 'Roboto', sans-serif;
-        font-size: 1.1em;
-        transition: background-color 0.3s;
-      }
-
-      .generator-panel button:hover {
-        background-color: var(--btn-hover);
-      }
-
-      .readonly-input {
-        background-color: #f5f5f5;
-        color: #555;
-        cursor: not-allowed;
-      }
-
-      .hint-text {
-        font-size: 0.8em;
-        color: #888;
-        margin-top: -10px;
-        margin-bottom: 15px;
-        font-family: 'Roboto', sans-serif;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="top-nav">
-      <button id="back-btn" class="back-btn">← Zurück</button>
-      <div class="nav-center">
-        <h1 id="page-title">Ladet Lädt...</h1>
-        <div id="breadcrumb"></div>
-      </div>
-      <div style="width: 80px"></div>
-    </div>
-
-    <div id="tile-container" class="tile-container"></div>
-
-    <div id="content-view" class="content-view">
-      <div class="content-header">
-        <div id="content-title">LF 1</div>
-        <div id="content-date">blabla</div>
-      </div>
-      <div id="content-body" class="content-body"></div>
-    </div>
-
-    <button id="toggle-generator" class="generator-toggle">Neue Notizen</button>
-
-    <div id="generator-panel" class="generator-panel">
-      <h3>Daten Eingabe</h3>
-
-      <label>Aktueller Speicherort:</label>
-      <input type="text" id="gen-parent-display" class="readonly-input" readonly />
-      <input type="hidden" id="gen-parent" />
-
-      <label>Kopfzeile des Kachel:</label>
-      <input type="text" id="gen-title" maxlength="80" placeholder="z.B. LF3, Thema 1" />
-      
-      <label>Datum (optional):</label>
-      <input type="text" id="gen-date" maxlength="30" placeholder="z.B. 1. März" />
-      
-      <label>Notizen:</label>
-      <textarea id="gen-content" rows="6" placeholder="# Große Überschrift&#10;- Stichpunkt 1&#10;- Stichpunkt 2&#10;Normaler Text"></textarea>
-      <div class="hint-text">Tipp: Nutze <b># </b> für Überschriften und <b>- </b> für Listen.</div>
-
-      <button onclick="submitNewData()">Speicherung zur Datenbank</button>
-      <div id="status-msg" class="status-msg"></div>
-    </div>
-
-    <script>
-      let db = {};
-      let currentPath = [];
-      let isGeneratorOpen = false;
-
-      const getEl = (id) => document.getElementById(id);
-
-      function formatContent(text) {
-        if (!text) return "";
-        let safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const lines = safeText.split('\n');
-        let html = '';
-        let inList = false;
-
-        lines.forEach(line => {
-          line = line.trim();
-          if (line.startsWith('# ')) {
-            if (inList) { html += '</ul>'; inList = false; }
-            html += `<h3>${line.substring(2)}</h3>`;
-          } else if (line.startsWith('- ')) {
-            if (!inList) { html += '<ul>'; inList = true; }
-            html += `<li>${line.substring(2)}</li>`;
-          } else if (line === '') {
-            if (inList) { html += '</ul>'; inList = false; }
-          } else {
-            if (inList) { html += '</ul>'; inList = false; }
-            html += `<p>${line}</p>`;
-          }
-        });
-        if (inList) html += '</ul>';
-        return html;
-      }
-
-      async function loadData() {
-        try {
-          const pageTitle = getEl("page-title");
-          if (pageTitle) pageTitle.innerText = "ladet lädt...";
-          
-          const res = await fetch("/api/data");
-          db = await res.json();
-          currentPath = [];
-          renderScreen();
-        } catch (err) {
-          const pageTitle = getEl("page-title");
-          if (pageTitle) pageTitle.innerText = "Fehler beim Laden der Daten";
-          console.error(err);
-        }
-      }
-
-      function getFolderByPath(pathArray) {
-        let folder = db;
-        for (let id of pathArray) {
-          if (folder.children) {
-            folder = folder.children.find(c => c.id === id);
-          }
-        }
-        return folder || db;
-      }
-
-      function renderScreen() {
-        const tileContainer = getEl("tile-container");
-        const contentView = getEl("content-view");
-        const pageTitle = getEl("page-title");
-        const breadcrumb = getEl("breadcrumb");
-        const backBtn = getEl("back-btn");
-        
-        if (!tileContainer || !contentView || !pageTitle || !backBtn) return;
-
-        tileContainer.innerHTML = "";
-        contentView.style.display = "none";
-        tileContainer.style.display = "flex";
-        backBtn.style.display = currentPath.length > 0 ? "block" : "none";
-
-        let currentFolder = getFolderByPath(currentPath);
-
-        let pathTitles = ["Notiz Storage"];
-        let tempFolder = db;
-        for (let id of currentPath) {
-          if (tempFolder.children) {
-            tempFolder = tempFolder.children.find(c => c.id === id);
-            if (tempFolder) pathTitles.push(tempFolder.title);
-          }
-        }
-        
-        if (breadcrumb) breadcrumb.innerText = pathTitles.join(" > ");
-
-        let targetFolder = currentFolder;
-        let targetPathTitles = [...pathTitles];
-        
-        if (currentFolder.content !== undefined) {
-          targetPathTitles.pop();
-          targetFolder = getFolderByPath(currentPath.slice(0, -1));
-        }
-
-        const genParentDisplay = getEl("gen-parent-display");
-        const genParent = getEl("gen-parent");
-        if (genParentDisplay) genParentDisplay.value = targetPathTitles.join(" > ") || "Notiz Storage";
-        if (genParent) genParent.value = targetFolder.id;
-
-        pageTitle.innerText = currentPath.length === 0 ? "Notiz Storage" : currentFolder.title;
-
-        if (currentFolder.content !== undefined) {
-          showContentView(currentFolder);
-          return;
-        }
-
-        if (currentFolder.children && currentFolder.children.length > 0) {
-          currentFolder.children.forEach((child) => {
-            const tile = document.createElement("div");
-            if (currentPath.length === 0) tile.className = "tile large";
-            else if (currentPath.length === 1) tile.className = "tile medium";
-            else tile.className = "tile small";
-
-            tile.innerText = child.title;
-            tile.onclick = () => navigateTo(child.id);
-            tileContainer.appendChild(tile);
-          });
-        } else {
-          tileContainer.innerHTML =
-            '<p style="color: var(--text-subtitle); font-family: Roboto; text-align: center; width: 100%;">Bis jetzt gibt es keine Notizen verfügbar. Fügen Sie eine neue Notiz zu.</p>';
-        }
-      }
-
-      function navigateTo(id) {
-        currentPath.push(id);
-        renderScreen();
-      }
-
-      function showContentView(data) {
-        const tileContainer = getEl("tile-container");
-        const contentView = getEl("content-view");
-        const contentTitle = getEl("content-title");
-        const contentDate = getEl("content-date");
-        const contentBody = getEl("content-body");
-
-        if (tileContainer) tileContainer.style.display = "none";
-        if (contentView) contentView.style.display = "block";
-        if (contentTitle) contentTitle.innerText = data.title;
-        if (contentDate) contentDate.innerText = data.date || "";
-        if (contentBody) contentBody.innerHTML = data.content || "<p>Noch kein Kontent verfügbar.</p>";
-      }
-
-      function submitNewData() {
-        const parentIdEl = getEl("gen-parent");
-        const titleEl = getEl("gen-title");
-        const dateEl = getEl("gen-date");
-        const contentEl = getEl("gen-content");
-        const statusMsg = getEl("status-msg");
-
-        if (!parentIdEl || !titleEl || !statusMsg) return;
-
-        const parentId = parentIdEl.value;
-        const title = titleEl.value.trim();
-        const date = dateEl ? dateEl.value.trim() : "";
-        const rawContent = contentEl ? contentEl.value : "";
-
-        if (!title) return alert("Bitte eine Kopfzeile einfügen!");
-        if (title.length > 80) return alert("Die Kopfzeile ist zu lang (Max 80 Zeichen).");
-
-        const formattedContent = formatContent(rawContent);
-        const newId = title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
-
-        let newObj = { id: newId, title: title };
-        if (formattedContent || date) {
-          newObj.date = date;
-          newObj.content = formattedContent;
-        } else {
-          newObj.children = [];
-        }
-
-        statusMsg.style.color = "blue";
-        statusMsg.innerText = "Speicherung zu GitHub...";
-
-        fetch("/api/add", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ parentId, newData: newObj }),
-        })
-        .then(res => res.json())
-        .then(result => {
-          if (result.success) {
-            statusMsg.style.color = "green";
-            statusMsg.innerText = "Erfolgreiche GitHub Speicherung";
-            if (titleEl) titleEl.value = "";
-            if (dateEl) dateEl.value = "";
-            if (contentEl) contentEl.value = "";
-            loadData();
-          } else {
-            statusMsg.style.color = "red";
-            statusMsg.innerText = "Fehler: " + result.error;
-          }
-        })
-        .catch(() => {
-          statusMsg.style.color = "red";
-          statusMsg.innerText = "Serververbindungsfehler";
-        });
-      }
-
-      document.addEventListener('DOMContentLoaded', () => {
-        const toggleGenBtn = getEl("toggle-generator");
-        const genPanel = getEl("generator-panel");
-        const backBtn = getEl("back-btn");
-
-        if (toggleGenBtn && genPanel) {
-          toggleGenBtn.onclick = () => {
-            isGeneratorOpen = !isGeneratorOpen;
-            genPanel.style.display = isGeneratorOpen ? "block" : "none";
-            const statusMsg = getEl("status-msg");
-            if (statusMsg) statusMsg.innerText = "";
-          };
-        }
-
-        if (backBtn) {
-          backBtn.onclick = () => {
-            currentPath.pop();
-            renderScreen();
-          };
-        }
-
-        loadData();
-      });
-    </script>
-  </body>
-</html>
+fetchDataFromGithub().then(() => {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Server läuft: ${PORT}`));
+});
