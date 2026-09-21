@@ -1,133 +1,759 @@
-require("dotenv").config();
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-
-const app = express();
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
-
-app.use(express.static(__dirname));
-
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_REPO = process.env.GITHUB_REPO;
-const GITHUB_BRANCH = process.env.GITHUB_BRANCH || "main";
-const GITHUB_FILE_PATH = "data.json";
-
-let currentData = {};
-
-async function fetchDataFromGithub() {
-  try {
-    const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?ref=${GITHUB_BRANCH}`;
-    const response = await axios.get(url, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` },
-    });
-    const content = Buffer.from(response.data.content, "base64").toString(
-      "utf8",
-    );
-    currentData = JSON.parse(content);
-    console.log("Github Daten geladen");
-  } catch (err) {
-    console.error("Fehler beim Laden von Github:", err.message);
-    currentData = { id: "root", title: "Notiz Storage", children: [] };
-  }
-}
-
-async function saveDataToGithub(newData) {
-  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`;
-  const getResponse = await axios.get(`${url}?ref=${GITHUB_BRANCH}`, {
-    headers: { Authorization: `token ${GITHUB_TOKEN}` },
-  });
-  const sha = getResponse.data.sha;
-  const contentBase64 = Buffer.from(JSON.stringify(newData, null, 2)).toString(
-    "base64",
-  );
-  await axios.put(
-    url,
-    {
-      message: "Neuer Content!",
-      content: contentBase64,
-      sha: sha,
-      branch: GITHUB_BRANCH,
-    },
-    {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` },
-    },
-  );
-
-  currentData = newData;
-  console.log("Zu Github gespeichert");
-}
-
-app.get("/api/data", (req, res) => {
-  res.json(currentData);
-});
-
-function idExists(node, targetId) {
-  if (node.id === targetId) return true;
-  if (node.children) {
-    for (let child of node.children) {
-      if (idExists(child, targetId)) return true;
-    }
-  }
-  return false;
-}
-
-app.post("/api/add", async (req, res) => {
-  const { parentId, newData } = req.body;
-
-  if (!parentId || typeof parentId !== "string") {
-    return res.status(400).json({ error: "Ungültige Parent ID." });
-  }
-  if (
-    !newData ||
-    typeof newData !== "object" ||
-    !newData.title ||
-    !newData.id
-  ) {
-    return res
-      .status(400)
-      .json({ error: "Ungültige Datenstruktur übermittelt." });
-  }
-
-  newData.title = newData.title.trim().substring(0, 100);
-  if (newData.date) newData.date = newData.date.trim().substring(0, 50);
-  if (newData.content) newData.content = newData.content.substring(0, 8000000);
-
-  if (idExists(currentData, newData.id)) {
-    return res.status(400).json({ error: "Diese ID existiert bereits." });
-  }
-  function addChildToTree(node, targetId, dataToAdd) {
-    if (node.id === targetId) {
-      if (!node.children) node.children = [];
-      node.children.push(newData);
-      return true;
-    }
-    if (node.children) {
-      for (let child of node.children) {
-        if (addChildToTree(child, targetId, dataToAdd)) return true;
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notiz Storage</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Garamond&family=Roboto&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-color: #faf3e0;
+        --box-bg: #ffffff;
+        --border-color: #e0c68b;
+        --text-main: #333333;
+        --text-heading: #5b3924;
+        --text-subtitle: #7d5a4f;
+        --btn-bg: #a67c52;
+        --btn-hover: #855e3a;
       }
-    }
-    return false;
-  }
-  try {
-    const success = addChildToTree(currentData, parentId, newData);
-    if (!success) return res.status(404).json({ error: "Parent ID not found" });
-    await saveDataToGithub(currentData);
-    res.json({
-      success: true,
-      message: "Daten wurden hinzugefügt und gespeichert",
-    });
-  } catch (err) {
-    console.error(
-      "Speicherungsfehler:",
-      err.response ? err.response.data : err.message,
-    );
-    res.status(500).json({ error: "Fehler bei der Speicherung nach GitHub" });
-  }
-});
 
-fetchDataFromGithub().then(() => {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Server läuft: ${PORT}`));
-});
+      body {
+        font-family: "Garamond", serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      .top-nav {
+        width: 100%;
+        max-width: 1000px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 15px;
+      }
+
+      .nav-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .back-btn {
+        font-family: "Roboto", sans-serif;
+        font-size: 1em;
+        background-color: var(--btn-bg);
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        display: none;
+        transition:
+          background-color 0.3s,
+          transform 0.3s;
+        margin-top: 10px;
+      }
+
+      .back-btn:hover {
+        background-color: var(--btn-hover);
+        transform: translateY(-2px);
+      }
+
+      h1 {
+        margin: 0;
+        text-align: center;
+        font-weight: normal;
+        font-size: 2.5em;
+        color: var(--text-heading);
+      }
+
+      #breadcrumb {
+        font-family: "Roboto", sans-serif;
+        color: var(--text-subtitle);
+        font-size: 1em;
+        margin-top: 5px;
+        text-align: center;
+      }
+
+      .tile-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        max-width: 1000px;
+        width: 100%;
+      }
+
+      .tile {
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 30px 20px;
+        min-width: 150px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.5em;
+        background-color: var(--box-bg);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        color: var(--text-heading);
+      }
+
+      .tile:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        background-color: #fdfbf7;
+      }
+
+      .tile.large {
+        width: 100%;
+        max-width: 300px;
+        padding: 50px 20px;
+      }
+      .tile.medium {
+        width: 150px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .tile.small {
+        width: 120px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .content-view {
+        display: none;
+        width: 100%;
+        max-width: 800px;
+        background-color: var(--box-bg);
+        padding: 40px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        box-sizing: border-box;
+        margin-bottom: 20px;
+      }
+
+      .content-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        font-size: 1.8em;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--text-heading);
+      }
+
+      .content-body {
+        font-family: "Roboto", sans-serif;
+        font-size: 1.1em;
+        line-height: 1.6;
+        color: var(--text-main);
+        margin-bottom: 30px;
+      }
+
+      .content-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin-top: 10px;
+        border: 1px solid var(--border-color);
+      }
+
+      .sub-tile-container {
+        border-top: 2px dashed var(--border-color);
+        padding-top: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+      }
+
+      .generator-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .generator-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .generator-panel {
+        background: var(--box-bg);
+        width: 90%;
+        max-width: 700px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        box-sizing: border-box;
+      }
+
+      .generator-panel h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: var(--text-heading);
+        font-size: 2em;
+        text-align: center;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 15px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        font-family: "Roboto", sans-serif;
+        font-size: 1em;
+        color: var(--text-subtitle);
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-family: "Roboto", sans-serif;
+        font-size: 1em;
+      }
+
+      .form-group input[type="date"] {
+        font-family: "Roboto", sans-serif;
+        cursor: pointer;
+      }
+
+      .form-group input[type="file"] {
+        border: 1px dashed var(--border-color);
+        background: #fdfbf7;
+        padding: 15px;
+        cursor: pointer;
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 150px;
+      }
+
+      .hint-text {
+        font-size: 0.85em;
+        color: #888;
+        margin-top: 5px;
+        font-family: "Roboto", sans-serif;
+      }
+
+      .generator-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: "Roboto", sans-serif;
+        font-size: 1.1em;
+        font-weight: bold;
+        transition: background-color 0.3s;
+      }
+
+      .btn-primary {
+        background-color: var(--btn-bg);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--btn-hover);
+      }
+
+      .btn-secondary {
+        background-color: #ddd;
+        color: #333;
+      }
+
+      .btn-secondary:hover {
+        background-color: #ccc;
+      }
+
+      .image-preview {
+        max-width: 100%;
+        max-height: 200px;
+        margin-top: 10px;
+        border-radius: 5px;
+        display: none;
+        border: 1px solid var(--border-color);
+      }
+
+      .status-msg {
+        margin-top: 15px;
+        text-align: center;
+        font-family: "Roboto", sans-serif;
+        font-weight: bold;
+      }
+
+      @media (max-width: 768px) {
+        .generator-panel {
+          padding: 20px;
+        }
+        h1 {
+          font-size: 2em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-nav">
+      <button id="back-btn" class="back-btn">← Zurück</button>
+      <div class="nav-center">
+        <h1 id="page-title">Ladet Lädt...</h1>
+        <div id="breadcrumb"></div>
+      </div>
+      <div style="width: 80px"></div>
+    </div>
+
+    <!-- Content für Grid -->
+    <div id="content-view" class="content-view">
+      <div class="content-header">
+        <div id="content-title"></div>
+        <div id="content-date"></div>
+      </div>
+      <div id="content-body" class="content-body"></div>
+      <div id="sub-tile-container" class="sub-tile-container"></div>
+    </div>
+
+    <!-- Grid -->
+    <div id="tile-container" class="tile-container"></div>
+
+    <button
+      id="toggle-generator"
+      class="generator-toggle"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--btn-bg);
+        color: white;
+        border: none;
+        padding: 15px 25px;
+        border-radius: 5px;
+        font-family: &quot;Roboto&quot;, sans-serif;
+        font-size: 1.1em;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        z-index: 50;
+      "
+    >
+      + Neue Notiz
+    </button>
+
+    <!-- Generator Modal -->
+    <div id="generator-overlay" class="generator-overlay">
+      <div class="generator-panel">
+        <h3>Neue Notiz erstellen</h3>
+
+        <div class="form-group">
+          <label>Aktueller Speicherort:</label>
+          <input
+            type="text"
+            id="gen-parent-display"
+            class="readonly-input"
+            readonly
+            style="background: #f5f5f5; color: #555"
+          />
+          <input type="hidden" id="gen-parent" />
+        </div>
+
+        <div class="form-group">
+          <label>Kopfzeile des Kachel:</label>
+          <input
+            type="text"
+            id="gen-title"
+            maxlength="80"
+            placeholder="z.B. LF3, Thema 1, Diagramm"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Datum (optional):</label>
+          <input type="date" id="gen-date" />
+        </div>
+
+        <div class="form-group">
+          <label>Bild hochladen (Diagramm, Screenshot, etc.):</label>
+          <input type="file" id="gen-image" accept="image/*" />
+          <img id="image-preview" class="image-preview" alt="Vorschau" />
+        </div>
+
+        <div class="form-group">
+          <label>Notizen:</label>
+          <textarea
+            id="gen-content"
+            rows="6"
+            maxlength="5000"
+            placeholder="# Große Überschrift&#10;- Stichpunkt 1&#10;- Stichpunkt 2&#10;Normaler Text"
+          ></textarea>
+          <div class="hint-text">
+            Tipp: Nutze <b># </b> für Überschriften und <b>- </b> für Listen.
+          </div>
+        </div>
+
+        <div class="generator-actions">
+          <button class="btn-secondary" onclick="closeGenerator()">
+            Abbrechen
+          </button>
+          <button class="btn-primary" id="save-btn" onclick="submitNewData()">
+            Speichern
+          </button>
+        </div>
+        <div id="status-msg" class="status-msg"></div>
+      </div>
+    </div>
+
+    <script>
+      let db = {};
+      let currentPath = [];
+      let isGeneratorOpen = false;
+      let uploadedImageBase64 = "";
+
+      const MAX_DEPTH = 5;
+
+      const getEl = (id) => document.getElementById(id);
+
+      function formatContent(text) {
+        if (!text) return "";
+        let safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const lines = safeText.split("\n");
+        let html = "";
+        let inList = false;
+
+        lines.forEach((line) => {
+          line = line.trim();
+          if (line.startsWith("# ")) {
+            if (inList) {
+              html += "</ul>";
+              inList = false;
+            }
+            html += `<h3>${line.substring(2)}</h3>`;
+          } else if (line.startsWith("- ")) {
+            if (!inList) {
+              html += "<ul>";
+              inList = true;
+            }
+            html += `<li>${line.substring(2)}</li>`;
+          } else if (line === "") {
+            if (inList) {
+              html += "</ul>";
+              inList = false;
+            }
+          } else {
+            if (inList) {
+              html += "</ul>";
+              inList = false;
+            }
+            html += `<p>${line}</p>`;
+          }
+        });
+        if (inList) html += "</ul>";
+        return html;
+      }
+
+      async function loadData() {
+        try {
+          const pageTitle = getEl("page-title");
+          if (pageTitle) pageTitle.innerText = "ladet lädt...";
+
+          const res = await fetch("/api/data");
+          db = await res.json();
+          currentPath = [];
+          renderScreen();
+        } catch (err) {
+          const pageTitle = getEl("page-title");
+          if (pageTitle) pageTitle.innerText = "Fehler beim Laden der Daten";
+          console.error(err);
+        }
+      }
+
+      function getFolderByPath(pathArray) {
+        let folder = db;
+        for (let id of pathArray) {
+          if (folder.children) {
+            folder = folder.children.find((c) => c.id === id);
+          }
+        }
+        return folder || db;
+      }
+
+      function renderScreen() {
+        const tileContainer = getEl("tile-container");
+        const contentView = getEl("content-view");
+        const subTileContainer = getEl("sub-tile-container");
+        const pageTitle = getEl("page-title");
+        const breadcrumb = getEl("breadcrumb");
+        const backBtn = getEl("back-btn");
+        const toggleGenBtn = getEl("toggle-generator");
+
+        if (!tileContainer || !contentView || !pageTitle || !backBtn) return;
+
+        tileContainer.innerHTML = "";
+        subTileContainer.innerHTML = "";
+        contentView.style.display = "none";
+        tileContainer.style.display = "flex";
+        backBtn.style.display = currentPath.length > 0 ? "block" : "none";
+
+        if (currentPath.length >= MAX_DEPTH) {
+          toggleGenBtn.style.display = "none";
+        } else {
+          toggleGenBtn.style.display = "block";
+        }
+
+        let currentFolder = getFolderByPath(currentPath);
+        let pathTitles = ["Notiz Storage"];
+        let tempFolder = db;
+        for (let id of currentPath) {
+          if (tempFolder.children) {
+            tempFolder = tempFolder.children.find((c) => c.id === id);
+            if (tempFolder) pathTitles.push(tempFolder.title);
+          }
+        }
+
+        if (breadcrumb) breadcrumb.innerText = pathTitles.join(" > ");
+
+        let targetFolder = currentFolder;
+        let targetPathTitles = [...pathTitles];
+
+        document.getElementById("gen-parent-display").value =
+          targetPathTitles.join(" > ") || "Notiz Storage";
+        document.getElementById("gen-parent").value = targetFolder.id;
+
+        pageTitle.innerText =
+          currentPath.length === 0 ? "Notiz Storage" : currentFolder.title;
+
+        if (currentFolder.content !== undefined) {
+          showContentView(currentFolder);
+        } else {
+          tileContainer.style.display = "flex";
+        }
+
+        let targetContainer =
+          currentFolder.content !== undefined
+            ? subTileContainer
+            : tileContainer;
+
+        if (currentFolder.children && currentFolder.children.length > 0) {
+          currentFolder.children.forEach((child) => {
+            const tile = document.createElement("div");
+            if (currentPath.length === 0) tile.className = "tile large";
+            else if (currentPath.length <= 2) tile.className = "tile medium";
+            else tile.className = "tile small";
+
+            tile.innerText = child.title;
+            tile.onclick = () => navigateTo(child.id);
+            targetContainer.appendChild(tile);
+          });
+        } else if (currentFolder.content === undefined) {
+          targetContainer.innerHTML =
+            '<p style="color: var(--text-subtitle); font-family: Roboto; text-align: center; width: 100%;">Bis jetzt gibt es keine Notizen verfügbar. Fügen Sie eine neue Notiz zu.</p>';
+        }
+      }
+
+      function navigateTo(id) {
+        currentPath.push(id);
+        renderScreen();
+      }
+
+      function showContentView(data) {
+        const contentView = getEl("content-view");
+        const contentTitle = getEl("content-title");
+        const contentDate = getEl("content-date");
+        const contentBody = getEl("content-body");
+
+        contentView.style.display = "block";
+        contentTitle.innerText = data.title;
+
+        if (data.date) {
+          const parts = data.date.split(".");
+          if (parts.length === 3) {
+            contentDate.innerText = `${parts[2]}.${parts[1]}.${parts[0]}`;
+          } else {
+            contentDate.innerText = data.date;
+          }
+        } else {
+          contentDate.innerText = "";
+        }
+
+        contentBody.innerHTML =
+          data.content || "<p>Noch kein Kontent verfügbar.</p>";
+      }
+
+      // --- GENERATOR LOGIK ---
+      function openGenerator() {
+        isGeneratorOpen = true;
+        getEl("generator-overlay").style.display = "flex";
+        getEl("status-msg").innerText = "";
+        uploadedImageBase64 = "";
+        getEl("image-preview").style.display = "none";
+        getEl("gen-image").value = "";
+      }
+
+      function closeGenerator() {
+        isGeneratorOpen = false;
+        getEl("generator-overlay").style.display = "none";
+      }
+
+      getEl("gen-image").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (file) {
+          if (file.size > 2 * 1024 * 1024) {
+            alert("Das Bild ist zu groß! Bitte wählen Sie ein Bild unter 2MB.");
+            this.value = "";
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            uploadedImageBase64 = event.target.result;
+            const preview = getEl("image-preview");
+            preview.src = uploadedImageBase64;
+            preview.style.display = "block";
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      function submitNewData() {
+        const parentIdEl = getEl("gen-parent");
+        const titleEl = getEl("gen-title");
+        const dateEl = getEl("gen-date");
+        const contentEl = getEl("gen-content");
+        const statusMsg = getEl("status-msg");
+
+        if (!parentIdEl || !titleEl || !statusMsg) return;
+
+        const parentId = parentIdEl.value;
+        const title = titleEl.value.trim();
+        const date = dateEl ? dateEl.value : "";
+        let rawContent = contentEl ? contentEl.value : "";
+
+        if (!title) return alert("Bitte eine Kopfzeile einfügen!");
+        if (title.length > 80)
+          return alert("Die Kopfzeile ist zu lang (Max 80 Zeichen).");
+
+        let formattedContent = formatContent(rawContent);
+        if (uploadedImageBase64) {
+          formattedContent += `<img src="${uploadedImageBase64}" alt="Hochgeladenes Bild" />`;
+        }
+
+        const newId =
+          title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
+
+        let newObj = { id: newId, title: title };
+        if (formattedContent || date) {
+          newObj.date = date;
+          newObj.content = formattedContent;
+        } else {
+          newObj.children = [];
+        }
+
+        statusMsg.style.color = "blue";
+        statusMsg.innerText = "Speicherung zu GitHub...";
+        getEl("save-btn").disabled = true;
+
+        fetch("/api/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ parentId, newData: newObj }),
+        })
+          .then((res) => res.json())
+          .then((result) => {
+            getEl("save-btn").disabled = false;
+            if (result.success) {
+              statusMsg.style.color = "green";
+              statusMsg.innerText = "Erfolgreiche GitHub Speicherung";
+              if (titleEl) titleEl.value = "";
+              if (dateEl) dateEl.value = "";
+              if (contentEl) contentEl.value = "";
+
+              setTimeout(() => {
+                closeGenerator();
+                loadData();
+              }, 1000);
+            } else {
+              statusMsg.style.color = "red";
+              statusMsg.innerText = "Fehler: " + result.error;
+            }
+          })
+          .catch(() => {
+            getEl("save-btn").disabled = false;
+            statusMsg.style.color = "red";
+            statusMsg.innerText = "Serververbindungsfehler";
+          });
+      }
+
+      // Initalizieren
+      document.addEventListener("DOMContentLoaded", () => {
+        const toggleGenBtn = getEl("toggle-generator");
+        const backBtn = getEl("back-btn");
+        const overlay = getEl("generator-overlay");
+
+        if (toggleGenBtn) toggleGenBtn.onclick = openGenerator;
+
+        if (backBtn) {
+          backBtn.onclick = () => {
+            currentPath.pop();
+            renderScreen();
+          };
+        }
+        if (overlay) {
+          overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) {
+              closeGenerator();
+            }
+          });
+        }
+
+        loadData();
+      });
+    </script>
+  </body>
+</html>
