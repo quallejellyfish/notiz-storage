@@ -2,13 +2,10 @@ require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-const path = require("path");
-const { buffer } = require("stream/consumers");
-const { prototype } = require("events");
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "10mb" }));
 
 app.use(express.static(__dirname));
 
@@ -31,7 +28,7 @@ async function fetchDataFromGithub() {
     currentData = JSON.parse(content);
     console.log("Github Daten geladen");
   } catch (err) {
-    console.error("nap", err.message);
+    console.error("Fehler beim Laden von Github:", err.message);
     currentData = { id: "root", title: "Notiz Storage", children: [] };
   }
 }
@@ -66,6 +63,67 @@ app.get("/api/data", (req, res) => {
   res.json(currentData);
 });
 
+app.post("/api/upload", async (req, res) => {
+  const { imageData, filename } = req.body;
+  if (!imageData)
+    return res.status(400).json({ error: "Keine Bilddaten übermittelt." });
+
+  const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
+  const uniqueFilename = `${Date.now()}-${filename.replace(/[^a-z0-9.]/gi, "_")}`;
+  const imagePath = `images/${uniqueFilename}`;
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${imagePath}`;
+
+  try {
+    try {
+      await axios.get(
+        `https://api.github.com/repos/${GITHUB_REPO}/contents/images?ref=${GITHUB_BRANCH}`,
+        {
+          headers: { Authorization: `token ${GITHUB_TOKEN}` },
+        },
+      );
+    } catch (e) {
+      if (e.response && e.response.status === 404) {
+        console.log("'images' Ordner nicht gefunden. Erstelle Ordner...");
+        await axios.put(
+          `https://api.github.com/repos/${GITHUB_REPO}/contents/images/.gitkeep`,
+          {
+            message: "Create images folder",
+            content: Buffer.from("").toString("base64"),
+            branch: GITHUB_BRANCH,
+          },
+          {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` },
+          },
+        );
+      }
+    }
+
+    await axios.put(
+      url,
+      {
+        message: `Upload image: ${uniqueFilename}`,
+        content: base64Data,
+        branch: GITHUB_BRANCH,
+      },
+      {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` },
+      },
+    );
+
+    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${imagePath}`;
+    console.log("✅ Bild hochgeladen:", rawUrl);
+    res.json({ success: true, url: rawUrl });
+  } catch (error) {
+    console.error(
+      "❌ Bild Upload Fehler:",
+      error.response ? error.response.data : error.message,
+    );
+    res
+      .status(500)
+      .json({ error: "Fehler beim Hochladen des Bildes zu GitHub." });
+  }
+});
+
 function idExists(node, targetId) {
   if (node.id === targetId) return true;
   if (node.children) {
@@ -95,7 +153,7 @@ app.post("/api/add", async (req, res) => {
 
   newData.title = newData.title.trim().substring(0, 100);
   if (newData.date) newData.date = newData.date.trim().substring(0, 50);
-  if (newData.content) newData.content = newData.content.substring(0, 5000);
+  if (newData.content) newData.content = newData.content.substring(0, 8000000);
 
   if (idExists(currentData, newData.id)) {
     return res.status(400).json({ error: "Diese ID existiert bereits." });
