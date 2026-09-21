@@ -417,7 +417,16 @@
 
         <div class="form-group">
           <label>Datum (optional):</label>
-          <input type="date" id="gen-date" />
+          <input
+            type="text"
+            id="gen-date"
+            maxlength="30"
+            placeholder="z.B. 1. März oder 1.3"
+          />
+          <div class="hint-text">
+            Tipp: Tag und Monat reichen (z.B. <b>1. März</b> oder <b>1.3</b>).
+            Das aktuelle Jahr wird automatisch hinzugefügt.
+          </div>
         </div>
 
         <div class="form-group">
@@ -460,6 +469,66 @@
       const MAX_DEPTH = 5;
 
       const getEl = (id) => document.getElementById(id);
+
+      function formatDateString(input) {
+        if (!input) return "";
+
+        const currentYear = new Date().getFullYear();
+        const monate = [
+          "Januar",
+          "Februar",
+          "März",
+          "April",
+          "Mai",
+          "Juni",
+          "Juli",
+          "August",
+          "September",
+          "Oktober",
+          "November",
+          "Dezember",
+        ];
+
+        let normalized = input.trim().replace(/\./g, " ");
+        let parts = normalized.split(/\s+/).filter((p) => p.length > 0);
+
+        if (parts.length === 0) return "";
+
+        let day = parts[0];
+        let monthStr = "";
+        let year = currentYear;
+
+        if (parts.length > 1) {
+          let monthPart = parts[1].toLowerCase();
+          if (/^\d+$/.test(monthPart)) {
+            let monthNum = parseInt(monthPart);
+            if (monthNum >= 1 && monthNum <= 12) {
+              monthStr = monate[monthNum - 1];
+            }
+          } else {
+            for (let m of monate) {
+              let lowerM = m.toLowerCase();
+              if (
+                lowerM.startsWith(monthPart.substring(0, 3)) ||
+                monthPart.startsWith(lowerM.substring(0, 3))
+              ) {
+                monthStr = m;
+                break;
+              }
+            }
+          }
+        }
+
+        if (parts.length > 2 && /^\d{4}$/.test(parts[parts.length - 1])) {
+          year = parts[parts.length - 1];
+        }
+
+        if (!monthStr) {
+          monthStr = monate[new Date().getMonth()];
+        }
+
+        return `${day}. ${monthStr} ${year}`;
+      }
 
       function formatContent(text) {
         if (!text) return "";
@@ -611,18 +680,7 @@
 
         contentView.style.display = "block";
         contentTitle.innerText = data.title;
-
-        if (data.date) {
-          const parts = data.date.split(".");
-          if (parts.length === 3) {
-            contentDate.innerText = `${parts[2]}.${parts[1]}.${parts[0]}`;
-          } else {
-            contentDate.innerText = data.date;
-          }
-        } else {
-          contentDate.innerText = "";
-        }
-
+        contentDate.innerText = data.date || "";
         contentBody.innerHTML =
           data.content || "<p>Noch kein Kontent verfügbar.</p>";
       }
@@ -633,6 +691,7 @@
         getEl("generator-overlay").style.display = "flex";
         getEl("status-msg").innerText = "";
         uploadedImageBase64 = "";
+        uploadedFileName = "";
         getEl("image-preview").style.display = "none";
         getEl("gen-image").value = "";
       }
@@ -650,6 +709,7 @@
             this.value = "";
             return;
           }
+          uploadedFileName = file.name;
           const reader = new FileReader();
           reader.onload = function (event) {
             uploadedImageBase64 = event.target.result;
@@ -661,7 +721,7 @@
         }
       });
 
-      function submitNewData() {
+      async function submitNewData() {
         const parentIdEl = getEl("gen-parent");
         const titleEl = getEl("gen-title");
         const dateEl = getEl("gen-date");
@@ -672,21 +732,52 @@
 
         const parentId = parentIdEl.value;
         const title = titleEl.value.trim();
-        const date = dateEl ? dateEl.value : "";
+        const rawDate = dateEl ? dateEl.value.trim() : "";
+        const date = formatDateString(rawDate);
         let rawContent = contentEl ? contentEl.value : "";
 
         if (!title) return alert("Bitte eine Kopfzeile einfügen!");
         if (title.length > 80)
           return alert("Die Kopfzeile ist zu lang (Max 80 Zeichen).");
 
-        let formattedContent = formatContent(rawContent);
+        statusMsg.style.color = "blue";
+        statusMsg.innerText = "Speicherung läuft...";
+        getEl("save-btn").disabled = true;
+
+        let finalImageUrl = "";
+
         if (uploadedImageBase64) {
-          formattedContent += `<img src="${uploadedImageBase64}" alt="Hochgeladenes Bild" />`;
+          try {
+            statusMsg.innerText = "Bild wird hochgeladen...";
+            const uploadRes = await fetch("/api/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                imageData: uploadedImageBase64,
+                filename: uploadedFileName,
+              }),
+            });
+            const uploadResult = await uploadRes.json();
+            if (uploadResult.success) {
+              finalImageUrl = uploadResult.url;
+            } else {
+              throw new Error(uploadResult.error);
+            }
+          } catch (err) {
+            statusMsg.style.color = "red";
+            statusMsg.innerText = "Fehler beim Bild-Upload: " + err.message;
+            getEl("save-btn").disabled = false;
+            return;
+          }
+        }
+
+        let formattedContent = formatContent(rawContent);
+        if (finalImageUrl) {
+          formattedContent += `<img src="${finalImageUrl}" alt="Hochgeladenes Bild" />`;
         }
 
         const newId =
           title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
-
         let newObj = { id: newId, title: title };
         if (formattedContent || date) {
           newObj.date = date;
@@ -695,9 +786,7 @@
           newObj.children = [];
         }
 
-        statusMsg.style.color = "blue";
         statusMsg.innerText = "Speicherung zu GitHub...";
-        getEl("save-btn").disabled = true;
 
         fetch("/api/add", {
           method: "POST",
@@ -713,7 +802,6 @@
               if (titleEl) titleEl.value = "";
               if (dateEl) dateEl.value = "";
               if (contentEl) contentEl.value = "";
-
               setTimeout(() => {
                 closeGenerator();
                 loadData();
