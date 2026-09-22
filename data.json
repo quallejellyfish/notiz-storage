@@ -71,7 +71,13 @@
     {
       "id": "lf-2-1790091666687",
       "title": "LF 2",
-      "children": []
+      "children": [
+        {
+          "id": "ohmsche-gesetze-1790091700017",
+          "title": "Ohmsche Gesetze",
+          "children": []
+        }
+      ]
     }
   ]
 }
