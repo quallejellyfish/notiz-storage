@@ -581,7 +581,6 @@
 
           const res = await fetch("/api/data");
           db = await res.json();
-          currentPath = [];
           renderScreen();
         } catch (err) {
           const pageTitle = getEl("page-title");
