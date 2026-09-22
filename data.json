@@ -75,7 +75,13 @@
         {
           "id": "ohmsche-gesetze-1790091713937",
           "title": "Ohmsche Gesetze",
-          "children": []
+          "children": [
+            {
+              "id": "-bung-1790091725179",
+              "title": "Übung",
+              "children": []
+            }
+          ]
         }
       ]
     }
