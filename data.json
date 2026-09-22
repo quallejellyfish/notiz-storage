@@ -118,6 +118,12 @@
           "title": "Elektrischer Widerstand",
           "date": "7. September 2026",
           "content": "<h3>Elektrischer Widerstand</h3><ul><li>fließt Strom durch einen elektrischen Leiter, solange sich die freien Elektronen zwischen den Atomen des Leiterkristalls hindurch[bewegen].</li><li>diese Bewegung im inneren des Leiters hat zur Folge, dass die freien Ladungsträger gegen Atome stoßen und in ihrem Fluss gestört werden.</li><li>dieser Effekt hat die Eigenschaft, den Strom im inneren des Leiters zu begrenzen.</li><li>der elektrische Widerstand wird auch als Stromwiderstand bezeichnet.</li></ul><h3>Widerstand berechnen:</h3><ul><li>Formelzeichen: (R) (resistor = Widerstand)</li><li>Einheit zur Benennung: Omega</li><li>Formel zur Berechnun: R = U/I</li></ul><p>Elektrischer Widerstand ist gleich elektrische Spannung durch elektrischer Strom</p>"
+        },
+        {
+          "id": "leitwert-1790096284111",
+          "title": "Leitwert",
+          "date": "7. September 2026",
+          "content": "<h3>Leitwert</h3><ul><li>mit einem kleinen Widerstand leiten den E-Strom gut</li></ul><p>-sie haben einen hohen Leitwert</p><ul><li>demzufolge haben Leiter mit einem hohen Widerstand einen geringen Leitwert</li><li>der Leitwert ist der Kehrwert des Widerstands</li><li>FZ: G</li><li>Maßeinheit: Siemens (S); Oft messen in Millisiemens oder Mikrosiemens</li><li>Formel: G = 1/R oder G = I/U</li></ul><p>Leitwert ist gleich 1 durch Widerstand</p><ul><li>R = 1/G</li></ul><p>Elektrischer Widerstand ist gleicht 1 durch Leitwert</p>"
         }
       ]
     }
