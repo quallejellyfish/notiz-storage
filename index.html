@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Notiz Storage</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Garamond&family=Roboto&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Roboto"
       rel="stylesheet"
     />
     <style>
@@ -19,9 +19,10 @@
         --btn-bg: #a67c52;
         --btn-hover: #855e3a;
       }
-
+      * {
+        font-family: "Roboto", sans-serif;
+      }
       body {
-        font-family: "Garamond", serif;
         background-color: var(--bg-color);
         color: var(--text-main);
         margin: 0;
@@ -37,20 +38,13 @@
         max-width: 1000px;
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         margin-bottom: 30px;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 15px;
       }
 
-      .nav-center {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-
       .back-btn {
-        font-family: "Roboto", sans-serif;
         font-size: 1em;
         background-color: var(--btn-bg);
         color: #fff;
@@ -62,9 +56,7 @@
         transition:
           background-color 0.3s,
           transform 0.3s;
-        margin-top: 10px;
       }
-
       .back-btn:hover {
         background-color: var(--btn-hover);
         transform: translateY(-2px);
@@ -79,7 +71,6 @@
       }
 
       #breadcrumb {
-        font-family: "Roboto", sans-serif;
         color: var(--text-subtitle);
         font-size: 1em;
         margin-top: 5px;
@@ -94,7 +85,6 @@
         max-width: 1000px;
         width: 100%;
       }
-
       .tile {
         border: 1px solid var(--border-color);
         border-radius: 10px;
@@ -107,32 +97,48 @@
         background-color: var(--box-bg);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         color: var(--text-heading);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
       }
-
       .tile:hover {
         transform: translateY(-4px);
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         background-color: #fdfbf7;
       }
-
       .tile.large {
         width: 100%;
         max-width: 300px;
         padding: 50px 20px;
       }
       .tile.medium {
-        width: 150px;
-        height: 100px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 160px;
+        height: 110px;
       }
       .tile.small {
-        width: 120px;
+        width: 130px;
         height: 100px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        font-size: 1.2em;
+      }
+      .tile-icon {
+        font-size: 2em;
+        margin-bottom: 10px;
+      }
+
+      #toggle-generator {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--btn-bg);
+        color: white;
+        border: none;
+        padding: 15px 25px;
+        border-radius: 5px;
+        font-size: 1.1em;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        z-index: 50;
       }
 
       .content-view {
@@ -151,6 +157,7 @@
       .content-header {
         display: flex;
         justify-content: space-between;
+        align-items: flex-end;
         margin-bottom: 25px;
         font-size: 1.8em;
         border-bottom: 2px solid var(--border-color);
@@ -159,7 +166,6 @@
       }
 
       .content-body {
-        font-family: "Roboto", sans-serif;
         font-size: 1.1em;
         line-height: 1.6;
         color: var(--text-main);
@@ -172,28 +178,6 @@
         border-radius: 8px;
         margin-top: 10px;
         border: 1px solid var(--border-color);
-      }
-
-      .sub-tile-container {
-        border-top: 2px dashed var(--border-color);
-        padding-top: 20px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        justify-content: center;
-      }
-
-      .generator-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
       }
 
       .generator-overlay {
@@ -237,7 +221,6 @@
       }
 
       .form-group label {
-        font-family: "Roboto", sans-serif;
         font-size: 1em;
         color: var(--text-subtitle);
         display: block;
@@ -246,19 +229,14 @@
       }
 
       .form-group input,
-      .form-group textarea {
+      .form-group textarea,
+      .form-group select {
         width: 100%;
         padding: 12px;
         box-sizing: border-box;
         border: 1px solid #ccc;
         border-radius: 6px;
-        font-family: "Roboto", sans-serif;
         font-size: 1em;
-      }
-
-      .form-group input[type="date"] {
-        font-family: "Roboto", sans-serif;
-        cursor: pointer;
       }
 
       .form-group input[type="file"] {
@@ -277,7 +255,32 @@
         font-size: 0.85em;
         color: #888;
         margin-top: 5px;
-        font-family: "Roboto", sans-serif;
+      }
+
+      .type-selector {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .type-option {
+        flex: 1;
+        padding: 15px;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .type-option.active {
+        border-color: var(--btn-bg);
+        background-color: #fdfbf7;
+        box-shadow: 0 0 0 2px var(--border-color);
+      }
+
+      .type-option input {
+        display: none;
       }
 
       .generator-actions {
@@ -293,7 +296,6 @@
         border: none;
         border-radius: 6px;
         cursor: pointer;
-        font-family: "Roboto", sans-serif;
         font-size: 1.1em;
         font-weight: bold;
         transition: background-color 0.3s;
@@ -329,8 +331,11 @@
       .status-msg {
         margin-top: 15px;
         text-align: center;
-        font-family: "Roboto", sans-serif;
         font-weight: bold;
+      }
+
+      .hidden {
+        display: none !important;
       }
 
       @media (max-width: 768px) {
@@ -344,6 +349,7 @@
     </style>
   </head>
   <body>
+    <!-- Oberleiste -->
     <div class="top-nav">
       <button id="back-btn" class="back-btn">← Zurück</button>
       <div class="nav-center">
@@ -353,69 +359,52 @@
       <div style="width: 80px"></div>
     </div>
 
-    <!-- Content für Grid -->
+    <!-- File View -->
     <div id="content-view" class="content-view">
       <div class="content-header">
         <div id="content-title"></div>
         <div id="content-date"></div>
-        <div style="margin-bottom: 20px">
-          <button
-            class="btn-secondary"
-            style="width: auto; padding: 8px 15px; font-size: 0.9em"
-            onclick="openSiblingGenerator()"
-          >
-            + Notiz auf gleicher Ebene
-          </button>
-        </div>
-        <div id="content-body" class="content-body"></div>
-        <div id="sub-tile-container" class="sub-tile-container"></div>
       </div>
+      <div id="content-body" class="content-body"></div>
     </div>
 
-    <!-- Grid -->
+    <!-- Grid of Tiles -->
     <div id="tile-container" class="tile-container"></div>
 
-    <button
-      id="toggle-generator"
-      class="generator-toggle"
-      style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: var(--btn-bg);
-        color: white;
-        border: none;
-        padding: 15px 25px;
-        border-radius: 5px;
-        font-family: &quot;Roboto&quot;, sans-serif;
-        font-size: 1.1em;
-        cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        z-index: 50;
-      "
-    >
-      + Neue Notiz
-    </button>
+    <!-- Button für die aktivierung des Generator Modals-->
+    <button id="toggle-generator">+ Neu erstellen</button>
 
-    <!-- Generator Modal -->
+    <!-- Generator Modal-->
     <div id="generator-overlay" class="generator-overlay">
       <div class="generator-panel">
-        <h3>Neue Notiz erstellen</h3>
+        <h3>Was möchtest du erstellen?</h3>
 
         <div class="form-group">
           <label>Aktueller Speicherort:</label>
           <input
             type="text"
             id="gen-parent-display"
-            class="readonly-input"
             readonly
             style="background: #f5f5f5; color: #555"
           />
           <input type="hidden" id="gen-parent" />
         </div>
 
+        <!-- Auswahl von Ordner oder Notiz beim aktuellen Order/Path erstellen -->
+        <div class="type-selector">
+          <label class="type-option active" id="type-folder-btn">
+            <input type="radio" name="gen-type" value="folder" checked />
+            Ordner
+          </label>
+          <label class="type-option" id="type-note-btn">
+            <input type="radio" name="gen-type" value="note" />
+            Notiz
+          </label>
+        </div>
+
+        <!-- Name input -->
         <div class="form-group">
-          <label>Kopfzeile des Kachel:</label>
+          <label>Name:</label>
           <input
             type="text"
             id="gen-title"
@@ -424,47 +413,55 @@
           />
         </div>
 
-        <div class="form-group">
-          <label>Datum (optional):</label>
-          <input
-            type="text"
-            id="gen-date"
-            maxlength="30"
-            placeholder="z.B. 1. März oder 1.3"
-          />
-          <div class="hint-text">
-            Tipp: Tag und Monat reichen (z.B. <b>1. März</b> oder <b>1.3</b>).
-            Das aktuelle Jahr wird automatisch hinzugefügt.
+        <!-- Freischaltung bei Pressung von Notiz-->
+        <div id="note-fields" class="hidden">
+          <!-- Datum Input -->
+          <div class="form-group">
+            <label>Datum:</label>
+            <input
+              type="text"
+              id="gen-date"
+              maxlength="30"
+              placeholder="z.B. 1. März oder 1.3"
+            />
+            <div class="hint-text">
+              Tipp: Tag und Monat reichen. Das aktuelle Jahr wird automatisch
+              hinzugefügt.
+            </div>
+          </div>
+
+          <!-- Bildhochladung -->
+          <div class="form-group">
+            <label>Bild hochladen (Diagramm, Screenshot, etc.):</label>
+            <input type="file" id="gen-image" accept="image/*" />
+            <img id="image-preview" class="image-preview" alt="Vorschau" />
+          </div>
+
+          <!-- Textbaustein für den Inhalt -->
+          <div class="form-group">
+            <label>Inhalt der Notiz:</label>
+            <textarea
+              id="gen-content"
+              rows="6"
+              maxlength="5000"
+              placeholder="# Große Überschrift&#10;- Stichpunkt 1&#10;- Stichpunkt 2&#10;Normaler Text"
+            ></textarea>
+            <div class="hint-text">
+              Tipp: Nutze <b># </b> für Überschriften und <b>- </b> für Listen.
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Bild hochladen (Diagramm, Screenshot, etc.):</label>
-          <input type="file" id="gen-image" accept="image/*" />
-          <img id="image-preview" class="image-preview" alt="Vorschau" />
-        </div>
-
-        <div class="form-group">
-          <label>Notizen:</label>
-          <textarea
-            id="gen-content"
-            rows="6"
-            maxlength="5000"
-            placeholder="# Große Überschrift&#10;- Stichpunkt 1&#10;- Stichpunkt 2&#10;Normaler Text"
-          ></textarea>
-          <div class="hint-text">
-            Tipp: Nutze <b># </b> für Überschriften und <b>- </b> für Listen.
-          </div>
-        </div>
-
+        <!-- Aktionen -->
         <div class="generator-actions">
           <button class="btn-secondary" onclick="closeGenerator()">
             Abbrechen
           </button>
           <button class="btn-primary" id="save-btn" onclick="submitNewData()">
-            Speichern
+            Erstellen
           </button>
         </div>
+        <!-- Statusnachricht -->
         <div id="status-msg" class="status-msg"></div>
       </div>
     </div>
@@ -606,25 +603,14 @@
       function renderScreen() {
         const tileContainer = getEl("tile-container");
         const contentView = getEl("content-view");
-        const subTileContainer = getEl("sub-tile-container");
         const pageTitle = getEl("page-title");
         const breadcrumb = getEl("breadcrumb");
         const backBtn = getEl("back-btn");
         const toggleGenBtn = getEl("toggle-generator");
 
-        if (!tileContainer || !contentView || !pageTitle || !backBtn) return;
-
         tileContainer.innerHTML = "";
-        subTileContainer.innerHTML = "";
         contentView.style.display = "none";
-        tileContainer.style.display = "flex";
         backBtn.style.display = currentPath.length > 0 ? "block" : "none";
-
-        if (currentPath.length >= MAX_DEPTH) {
-          toggleGenBtn.style.display = "none";
-        } else {
-          toggleGenBtn.style.display = "block";
-        }
 
         let currentFolder = getFolderByPath(currentPath);
         let pathTitles = ["Notiz Storage"];
@@ -636,97 +622,94 @@
           }
         }
 
-        if (breadcrumb) breadcrumb.innerText = pathTitles.join(" > ");
-
-        let targetFolder = currentFolder;
-        let targetPathTitles = [...pathTitles];
-
-        document.getElementById("gen-parent-display").value =
-          targetPathTitles.join(" > ") || "Notiz Storage";
-        document.getElementById("gen-parent").value = targetFolder.id;
-
+        breadcrumb.innerText = pathTitles.join(" > ");
         pageTitle.innerText =
           currentPath.length === 0 ? "Notiz Storage" : currentFolder.title;
 
         if (currentFolder.content !== undefined) {
-          showContentView(currentFolder);
+          tileContainer.style.display = "none";
+          contentView.style.display = "block";
+          toggleGenBtn.style.display = "none";
+
+          getEl("content-title").innerText = currentFolder.title;
+          getEl("content-date").innerText = currentFolder.date || "";
+          getEl("content-body").innerHTML =
+            currentFolder.content || "<p>Kein Inhalt.</p>";
         } else {
           tileContainer.style.display = "flex";
-        }
+          contentView.style.display = "none";
+          toggleGenBtn.style.display = "block";
 
-        let targetContainer =
-          currentFolder.content !== undefined
-            ? subTileContainer
-            : tileContainer;
+          getEl("gen-parent-display").value =
+            pathTitles.join(" > ") || "Notiz Storage";
+          getEl("gen-parent").value = currentFolder.id;
 
-        if (currentFolder.children && currentFolder.children.length > 0) {
-          currentFolder.children.forEach((child) => {
-            const tile = document.createElement("div");
-            if (currentPath.length === 0) tile.className = "tile large";
-            else if (currentPath.length <= 2) tile.className = "tile medium";
-            else tile.className = "tile small";
+          if (currentFolder.children && currentFolder.children.length > 0) {
+            currentFolder.children.forEach((child) => {
+              const tile = document.createElement("div");
+              if (currentPath.length === 0) tile.className = "tile large";
+              else if (currentPath.length <= 2) tile.className = "tile medium";
+              else tile.className = "tile small";
 
-            tile.innerText = child.title;
-            tile.onclick = () => navigateTo(child.id);
-            targetContainer.appendChild(tile);
-          });
-        } else if (currentFolder.content === undefined) {
-          targetContainer.innerHTML =
-            '<p style="color: var(--text-subtitle); font-family: Roboto; text-align: center; width: 100%;">Bis jetzt gibt es keine Notizen verfügbar. Fügen Sie eine neue Notiz zu.</p>';
+              const isFolder =
+                child.children !== undefined && child.content === undefined;
+              tile.innerHTML = `<div class="tile-icon">${isFolder ? "📁" : "📝"}</div><div>${child.title}</div>`;
+              tile.onclick = () => navigateTo(child.id);
+              tileContainer.appendChild(tile);
+            });
+          } else {
+            tileContainer.innerHTML =
+              '<p style="color: var(--text-subtitle); text-align: center; width: 100%;">Dieser Ordner ist leer. Erstelle eine neue Notiz oder einen Unterordner.</p>';
+          }
         }
       }
-
       function navigateTo(id) {
         currentPath.push(id);
         renderScreen();
       }
 
-      function showContentView(data) {
-        const contentView = getEl("content-view");
-        const contentTitle = getEl("content-title");
-        const contentDate = getEl("content-date");
-        const contentBody = getEl("content-body");
-
-        contentView.style.display = "block";
-        contentTitle.innerText = data.title;
-        contentDate.innerText = data.date || "";
-        contentBody.innerHTML =
-          data.content || "<p>Noch kein Kontent verfügbar.</p>";
-      }
-
-      // --- GENERATOR LOGIK ---
-      function openSiblingGenerator() {
-        if (currentPath.length < 2) return;
-        const parentId = currentPath[currentPath.length - 2];
-        const breadcrumbText = getEl("breadcrumb").innerText;
-        const parts = breadcrumbText.split(" > ");
-        parts.pop();
-        openGenerator(parentId, parts.join(" > "));
-      }
-
-      function openGenerator(forcedParentId = null, displayPath = null) {
-        isGeneratorOpen = true;
+      function openGenerator() {
         getEl("generator-overlay").style.display = "flex";
         getEl("status-msg").innerText = "";
         uploadedImageBase64 = "";
         uploadedFileName = "";
         getEl("image-preview").style.display = "none";
         getEl("gen-image").value = "";
+        getEl("gen-title").value = "";
+        getEl("gen-date").value = "";
+        getEl("gen-content").value = "";
 
-        if (forcedParentId) {
-          getEl("gen-parent").value = forcedParentId;
-          getEl("gen-parent-display").value = displayPath || "Notiz Storage";
-        } else {
-          const currentFolder = getFolderByPath(currentPath);
-          getEl("gen-parent").value = currentFolder.id;
-          getEl("gen-parent-display").value = getEl("breadcrumb").innerText;
-        }
+        document.querySelector(
+          'input[name="gen-type"][value="folder"]',
+        ).checked = true;
+        toggleTypeFields("folder");
       }
 
       function closeGenerator() {
-        isGeneratorOpen = false;
         getEl("generator-overlay").style.display = "none";
       }
+
+      function toggleTypeFields(type) {
+        const noteFields = getEl("note-fields");
+        const folderBtn = getEl("type-folder-btn");
+        const noteBtn = getEl("type-note-btn");
+
+        if (type === "note") {
+          noteFields.classList.remove("hidden");
+          folderBtn.classList.remove("active");
+          noteBtn.classList.add("active");
+        } else {
+          noteFields.classList.add("hidden");
+          noteBtn.classList.remove("active");
+          folderBtn.classList.add("active");
+        }
+      }
+
+      document.querySelectorAll('input[name="gen-type"]').forEach((radio) => {
+        radio.addEventListener("change", (e) =>
+          toggleTypeFields(e.target.value),
+        );
+      });
 
       getEl("gen-image").addEventListener("change", function (e) {
         const file = e.target.files[0];
@@ -749,71 +732,66 @@
       });
 
       async function submitNewData() {
-        const parentIdEl = getEl("gen-parent");
-        const titleEl = getEl("gen-title");
-        const dateEl = getEl("gen-date");
-        const contentEl = getEl("gen-content");
+        const parentId = getEl("gen-parent").value;
+        const title = getEl("gen-title").value.trim();
+        const type = document.querySelector(
+          'input[name="gen-type"]:checked',
+        ).value;
         const statusMsg = getEl("status-msg");
 
-        if (!parentIdEl || !titleEl || !statusMsg) return;
-
-        const parentId = parentIdEl.value;
-        const title = titleEl.value.trim();
-        const rawDate = dateEl ? dateEl.value.trim() : "";
-        const date = formatDateString(rawDate);
-        let rawContent = contentEl ? contentEl.value : "";
-
-        if (!title) return alert("Bitte eine Kopfzeile einfügen!");
+        if (!title) return alert("Bitte einen Namen einfügen!");
         if (title.length > 80)
-          return alert("Die Kopfzeile ist zu lang (Max 80 Zeichen).");
+          return alert("Der Name ist zu lang (Max 80 Zeichen).");
 
         statusMsg.style.color = "blue";
         statusMsg.innerText = "Speicherung läuft...";
         getEl("save-btn").disabled = true;
 
-        let finalImageUrl = "";
+        let newObj = {
+          id:
+            title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now(),
+          title: title,
+        };
 
-        if (uploadedImageBase64) {
-          try {
-            statusMsg.innerText = "Bild wird hochgeladen...";
-            const uploadRes = await fetch("/api/upload", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                imageData: uploadedImageBase64,
-                filename: uploadedFileName,
-              }),
-            });
-            const uploadResult = await uploadRes.json();
-            if (uploadResult.success) {
-              finalImageUrl = uploadResult.url;
-            } else {
-              throw new Error(uploadResult.error);
-            }
-          } catch (err) {
-            statusMsg.style.color = "red";
-            statusMsg.innerText = "Fehler beim Bild-Upload: " + err.message;
-            getEl("save-btn").disabled = false;
-            return;
-          }
-        }
-
-        let formattedContent = formatContent(rawContent);
-        if (finalImageUrl) {
-          formattedContent += `<img src="${finalImageUrl}" alt="Hochgeladenes Bild" />`;
-        }
-
-        const newId =
-          title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
-        let newObj = { id: newId, title: title };
-        if (formattedContent || date) {
-          newObj.date = date;
-          newObj.content = formattedContent;
-        } else {
+        if (type === "folder") {
+          // Herstellung des Ordner
           newObj.children = [];
-        }
+        } else {
+          // Notiz Erstellung
+          const rawDate = getEl("gen-date").value.trim();
+          const date = formatDateString(rawDate);
+          const rawContent = getEl("gen-content").value;
 
-        statusMsg.innerText = "Speicherung zu GitHub...";
+          let finalImageUrl = "";
+          if (uploadedImageBase64) {
+            try {
+              statusMsg.innerText = "Bild wird hochgeladen...";
+              const uploadRes = await fetch("/api/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  imageData: uploadedImageBase64,
+                  filename: uploadedFileName,
+                }),
+              });
+              const uploadResult = await uploadRes.json();
+              if (uploadResult.success) finalImageUrl = uploadResult.url;
+              else throw new Error(uploadResult.error);
+            } catch (err) {
+              statusMsg.style.color = "red";
+              statusMsg.innerText = "Fehler beim Bild-Upload: " + err.message;
+              getEl("save-btn").disabled = false;
+              return;
+            }
+          }
+
+          let formattedContent = formatContent(rawContent);
+          if (finalImageUrl)
+            formattedContent += `<img src="${finalImageUrl}" alt="Hochgeladenes Bild" />`;
+
+          if (date) newObj.date = date;
+          newObj.content = formattedContent || "<p>Kein Inhalt.</p>";
+        }
 
         fetch("/api/add", {
           method: "POST",
@@ -825,14 +803,11 @@
             getEl("save-btn").disabled = false;
             if (result.success) {
               statusMsg.style.color = "green";
-              statusMsg.innerText = "Erfolgreiche GitHub Speicherung";
-              if (titleEl) titleEl.value = "";
-              if (dateEl) dateEl.value = "";
-              if (contentEl) contentEl.value = "";
+              statusMsg.innerText = "Erfolgreich erstellt!";
               setTimeout(() => {
                 closeGenerator();
                 loadData();
-              }, 1000);
+              }, 800);
             } else {
               statusMsg.style.color = "red";
               statusMsg.innerText = "Fehler: " + result.error;
@@ -845,24 +820,15 @@
           });
       }
 
-      // Initalizieren
       document.addEventListener("DOMContentLoaded", () => {
-        const toggleGenBtn = getEl("toggle-generator");
-        const backBtn = getEl("back-btn");
-        const overlay = getEl("generator-overlay");
-
-        if (toggleGenBtn) toggleGenBtn.onclick = () => openGenerator();
-
-        if (backBtn)
-          backBtn.onclick = () => {
-            currentPath.pop();
-            renderScreen();
-          };
-        if (overlay)
-          overlay.addEventListener("click", (e) => {
-            if (e.target === overlay) closeGenerator();
-          });
-
+        getEl("toggle-generator").onclick = openGenerator;
+        getEl("back-btn").onclick = () => {
+          currentPath.pop();
+          renderScreen();
+        };
+        getEl("generator-overlay").addEventListener("click", (e) => {
+          if (e.target.id === "generator-overlay") closeGenerator();
+        });
         loadData();
       });
     </script>
