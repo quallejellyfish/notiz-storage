@@ -476,6 +476,61 @@
 
       const getEl = (id) => document.getElementById(id);
 
+      function saveDraft() {
+        const typeEl = document.querySelector('input[name="gen-type"]:checked');
+        const draft = {
+          title: getEl("gen-title") ? getEl("gen-title").value : "",
+          date: getEl("gen-date") ? getEl("gen-date").value : "",
+          content: getEl("gen-content") ? getEl("gen-content").value : "",
+          type: typeEl ? typeEl.value : "folder",
+          imageBase64: uploadedImageBase64,
+          imageName: uploadedFileName,
+          parentId: getEl("gen-parent") ? getEl("gen-parent").value : "root",
+        };
+        localStorage.setItem("notizStorageDraft", JSON.stringify(draft));
+      }
+
+      function clearDraft() {
+        localStorage.removeItem("notizStorageDraft");
+      }
+
+      function loadDraft() {
+        const draftStr = localStorage.getItem("notizStorageDraft");
+        if (!draftStr) return false;
+        try {
+          const draft = JSON.parse(draftStr);
+
+          const currentParentId = getEl("gen-parent").value;
+          if (draft.parentId && draft.parentId !== currentParentId) {
+            clearDraft();
+            return false;
+          }
+
+          getEl("gen-title").value = draft.title || "";
+          getEl("gen-date").value = draft.date || "";
+          getEl("gen-content").value = draft.content || "";
+
+          if (draft.type) {
+            document.querySelector(
+              `input[name="gen-type"][value="${draft.type}"]`,
+            ).checked = true;
+            toggleTypeFields(draft.type);
+          }
+
+          if (draft.imageBase64) {
+            uploadedImageBase64 = draft.imageBase64;
+            uploadedFileName = draft.imageName || "draft-image.png";
+            const preview = getEl("image-preview");
+            preview.src = uploadedImageBase64;
+            preview.style.display = "block";
+          }
+          return true;
+        } catch (e) {
+          console.error("Fehler beim Laden des Entwurfs:", e);
+          return false;
+        }
+      }
+
       function formatDateString(input) {
         if (!input) return "";
 
@@ -670,18 +725,21 @@
       function openGenerator() {
         getEl("generator-overlay").style.display = "flex";
         getEl("status-msg").innerText = "";
-        uploadedImageBase64 = "";
-        uploadedFileName = "";
-        getEl("image-preview").style.display = "none";
-        getEl("gen-image").value = "";
-        getEl("gen-title").value = "";
-        getEl("gen-date").value = "";
-        getEl("gen-content").value = "";
 
-        document.querySelector(
-          'input[name="gen-type"][value="folder"]',
-        ).checked = true;
-        toggleTypeFields("folder");
+        const hasDraft = loadDraft();
+        if (!hasDraft) {
+          uploadedImageBase64 = "";
+          uploadedFileName = "";
+          getEl("image-preview").style.display = "none";
+          getEl("gen-image").value = "";
+          getEl("gen-title").value = "";
+          getEl("gen-date").value = "";
+          getEl("gen-content").value = "";
+          document.querySelector(
+            'input[name="gen-type"][value="folder"]',
+          ).checked = true;
+          toggleTypeFields("folder");
+        }
       }
 
       function closeGenerator() {
@@ -705,10 +763,15 @@
       }
 
       document.querySelectorAll('input[name="gen-type"]').forEach((radio) => {
-        radio.addEventListener("change", (e) =>
-          toggleTypeFields(e.target.value),
-        );
+        radio.addEventListener("change", (e) => {
+          toggleTypeFields(e.target.value);
+          saveDraft();
+        });
       });
+
+      getEl("gen-title").addEventListener("input", saveDraft);
+      getEl("gen-date").addEventListener("input", saveDraft);
+      getEl("gen-content").addEventListener("input", saveDraft);
 
       getEl("gen-image").addEventListener("change", function (e) {
         const file = e.target.files[0];
@@ -725,6 +788,7 @@
             const preview = getEl("image-preview");
             preview.src = uploadedImageBase64;
             preview.style.display = "block";
+            saveDraft();
           };
           reader.readAsDataURL(file);
         }
@@ -803,6 +867,7 @@
             if (result.success) {
               statusMsg.style.color = "green";
               statusMsg.innerText = "Erfolgreich erstellt!";
+              clearDraft();
               setTimeout(() => {
                 closeGenerator();
                 loadData();
