@@ -69,15 +69,25 @@ app.get("/api/image/:filename", async (req, res) => {
 
   try {
     const response = await axios.get(url, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` },
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        Accept: "application/vnd.github.v3.raw",
+      },
       responseType: "arraybuffer", // Important: Get raw binary data
     });
 
-    const contentType = response.headers["content-type"] || "image/png";
+    // Determine the correct content type
+    const ext = filename.split(".").pop().toLowerCase();
+    let contentType = "image/png";
+    if (ext === "jpg" || ext === "jpeg") contentType = "image/jpeg";
+    else if (ext === "gif") contentType = "image/gif";
+    else if (ext === "webp") contentType = "image/webp";
+    else if (ext === "svg") contentType = "image/svg+xml";
+
     res.setHeader("Content-Type", contentType);
     res.send(response.data);
   } catch (error) {
-    console.error("❌ Bild Proxy Fehler:", error.message);
+    console.error("Bild Proxy Fehler:", error.message);
     res.status(404).send("Bild nicht gefunden");
   }
 });
