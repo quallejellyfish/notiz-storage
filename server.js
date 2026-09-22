@@ -184,6 +184,16 @@ app.post("/api/add", async (req, res) => {
   function addChildToTree(node, targetId, dataToAdd) {
     if (node.id === targetId) {
       if (!node.children) node.children = [];
+
+      let originalTitle = dataToAdd.title;
+      let newTitle = originalTitle;
+      let counter = 2;
+      while (node.children.some((c) => c.title === newTitle)) {
+        newTitle = `${originalTitle} (${counter})`;
+        counter++;
+      }
+      dataToAdd.title = newTitle;
+
       node.children.push(newData);
       return true;
     }
