@@ -43,7 +43,13 @@
     {
       "id": "mein-lieblings-ordner2-1790090495596",
       "title": "mein lieblings ordner2",
-      "children": []
+      "children": [
+        {
+          "id": "ordner-in-ordner--1790090508296",
+          "title": "ordner in ordner?",
+          "children": []
+        }
+      ]
     }
   ]
 }
