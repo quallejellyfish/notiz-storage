@@ -63,6 +63,25 @@ app.get("/api/data", (req, res) => {
   res.json(currentData);
 });
 
+app.get("/api/image/:filename", async (req, res) => {
+  const { filename } = req.params;
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/images/${filename}?ref=${GITHUB_BRANCH}`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` },
+      responseType: "arraybuffer", // Important: Get raw binary data
+    });
+
+    const contentType = response.headers["content-type"] || "image/png";
+    res.setHeader("Content-Type", contentType);
+    res.send(response.data);
+  } catch (error) {
+    console.error("❌ Bild Proxy Fehler:", error.message);
+    res.status(404).send("Bild nicht gefunden");
+  }
+});
+
 app.post("/api/upload", async (req, res) => {
   const { imageData, filename } = req.body;
   if (!imageData)
@@ -77,9 +96,7 @@ app.post("/api/upload", async (req, res) => {
     try {
       await axios.get(
         `https://api.github.com/repos/${GITHUB_REPO}/contents/images?ref=${GITHUB_BRANCH}`,
-        {
-          headers: { Authorization: `token ${GITHUB_TOKEN}` },
-        },
+        { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
       );
     } catch (e) {
       if (e.response && e.response.status === 404) {
@@ -91,9 +108,7 @@ app.post("/api/upload", async (req, res) => {
             content: Buffer.from("").toString("base64"),
             branch: GITHUB_BRANCH,
           },
-          {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` },
-          },
+          { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
         );
       }
     }
@@ -105,17 +120,15 @@ app.post("/api/upload", async (req, res) => {
         content: base64Data,
         branch: GITHUB_BRANCH,
       },
-      {
-        headers: { Authorization: `token ${GITHUB_TOKEN}` },
-      },
+      { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
     );
 
-    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${imagePath}`;
-    console.log("✅ Bild hochgeladen:", rawUrl);
-    res.json({ success: true, url: rawUrl });
+    const proxyUrl = `/api/image/${uniqueFilename}`;
+    console.log("Bild hochgeladen:", proxyUrl);
+    res.json({ success: true, url: proxyUrl });
   } catch (error) {
     console.error(
-      "❌ Bild Upload Fehler:",
+      "Bild Upload Fehler:",
       error.response ? error.response.data : error.message,
     );
     res
