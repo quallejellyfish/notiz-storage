@@ -92,6 +92,12 @@
               "id": "def-1790095106620",
               "title": "Def",
               "children": []
+            },
+            {
+              "id": "definiitonh-1790095163708",
+              "title": "Definiitonh",
+              "date": "16. September 2026",
+              "content": "<h3>Ohmsches Gesetz</h3><p>Das Ohmsches Gesetz besagt, dass die Stromstärke (I) in einem Leiter und die Spannung (U) zwischen den Enden des Leiters direkt proportional sind. Mit Hilfe des O.G. lassen sich die drei Grundgrößen eines Stromkreises berechnen, wenn mindestens zwei davon bekannt sind. Die drei Grundgrößen sind Spannung, Strom und der Widerstand. Das O.G. gilt für ohmsche Widerstände. Dazu zählen normale Widerstände und Bauelemente, die einen linearen Zusammenhang zwischen Spannung und Strom haben.</p><h3>Merksätze:</h3><ul><li>Die Stromstärke (I) ist proportional der Spannung (U).</li><li>Die Stromstärke (I) ist umgekehrt proportional dem Widerstand (R).</li></ul>"
             }
           ]
         }
