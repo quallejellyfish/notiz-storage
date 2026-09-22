@@ -87,6 +87,11 @@
                   "content": "<h3>1. Gegeben: U = 220 V, I = 3,4 A</h3><p>a) Widerstand?</p><ul><li>R = U/I</li><li>R = 220 V/3,4 A</li><li>R = 64,7 Ohm</li></ul><p>b) Stromstärke?</p><ul><li>G = 1/R</li><li>G = 1/64,7</li><li>G = 0,015 S</li><li>0.015 S -&gt; 15,5 mS</li></ul><h3>2. Gegeben: U = 3,2 V, I = 0,3 A</h3><p>a) Stormstärke?</p><ul><li>R = U/I</li><li>R = 3,2 V / 0,3 A</li><li>R = 10,7 Ohm</li></ul><ul><li>G = I/U</li><li>G = 0,3 A / 3,2 V</li><li>G = 93,75 mS</li></ul><h3>3. Gegeben: R = 24,2 Ohm, U = 220V</h3><p>a) Strom?</p><ul><li>I = U/R</li><li>I = 220V / 24,2 Ohm</li><li>I = 9,69 A</li></ul><h3>4. Gegeben: U = a) 50V; b) 120V; c) 220V; d) 380V; R = 25 kilo Ohm</h3><ul><li>25 kilo Ohm = 25000</li><li>I = U/R</li><li>I = abcd / 25000 Ohm</li><li>alles individuell aber wollte es nicht ausschreiben ;)</li></ul><h3>5. Gegeben: R = 5 kilo Ohm; G = 30 mA</h3><ul><li>5 kilo Ohm = 5000; 30 mA = 0,03 A</li></ul><p>a) Spannung?</p><ul><li>U = R*I</li><li>U = 5000 * 0,03A</li><li>U = 150 V</li></ul>"
                 }
               ]
+            },
+            {
+              "id": "def-1790095106620",
+              "title": "Def",
+              "children": []
             }
           ]
         }
