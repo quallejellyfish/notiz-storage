@@ -33,6 +33,12 @@
           "content": "<img src=\"https://raw.githubusercontent.com/quallejellyfish/notiz-storage/main/images/1790007131614-puparyV2.png\" alt=\"Hochgeladenes Bild\" />"
         }
       ]
+    },
+    {
+      "id": "mein-lieblings-ordner-1790089828424",
+      "title": "mein lieblings ordner",
+      "date": "1. Mai 2026",
+      "content": "<h3>hallo welt</h3><ul><li>hallo welt</li></ul><p>hallo welt</p><p>#hallo welt</p><h3>hallo welt</h3><ul><li>hallo welt</li></ul><img src=\"/api/image/1790089822183-puparyV2.png\" alt=\"Hochgeladenes Bild\" />"
     }
   ]
 }
