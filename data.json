@@ -112,6 +112,12 @@
           "title": "Spezifischer Widerstand Rho",
           "date": "7. September 2026",
           "content": "<p>Spezifischer Widerstand (\\rho ) (Rho)Jedes Material hat einen eigenen Widerstand, der von der Atomdichte und Anzahl der freien Elektronen abhängig ist.Der Widerstand wird deshalb auch spezifischer Widerstand genannt.Je kürzer die Leitungslänge und je größer der Leitungsquerschnitt des Materials, desto geringer der elektrische Widerstand.Die Abhängigkeit von Leitungslänge wird dadurch erklärt, dass die Elektronenbewegung auf einer größeren Strecke stärker gehemmt wird, als auf einer kürzeren Strecke.Der spezifische Widerstand ist eine Materialkonstante und ist somit ein fester definierter Wert.</p><h3>Definition:</h3><p>Der Widerstand eines Leiters von (1,\\text{m}) Länge und (1,\\text{mm}^2) Querschnitt bei (20^{\\circ }\\text{C}) heißt spezifischer Widerstand.</p><p>Der Kehrwert des \"spezifischen Widerstands\" nennt man elektrische Leitfähigkeit.</p><ul><li>Maßeinheit: Ohm * mm² / m</li><li>Basiswerte: 1m, 1mm², 20°C = Basis</li></ul><h3>Formel:</h3><ul><li>rho = R*q/l</li></ul><p>= Rho = Wiederstand mal Leitquerschnitt durch leitlänge</p>"
+        },
+        {
+          "id": "elektrischer-widerstand-1790096008438",
+          "title": "Elektrischer Widerstand",
+          "date": "7. September 2026",
+          "content": "<h3>Elektrischer Widerstand</h3><ul><li>fließt Strom durch einen elektrischen Leiter, solange sich die freien Elektronen zwischen den Atomen des Leiterkristalls hindurch[bewegen].</li><li>diese Bewegung im inneren des Leiters hat zur Folge, dass die freien Ladungsträger gegen Atome stoßen und in ihrem Fluss gestört werden.</li><li>dieser Effekt hat die Eigenschaft, den Strom im inneren des Leiters zu begrenzen.</li><li>der elektrische Widerstand wird auch als Stromwiderstand bezeichnet.</li></ul><h3>Widerstand berechnen:</h3><ul><li>Formelzeichen: (R) (resistor = Widerstand)</li><li>Einheit zur Benennung: Omega</li><li>Formel zur Berechnun: R = U/I</li></ul><p>Elektrischer Widerstand ist gleich elektrische Spannung durch elektrischer Strom</p>"
         }
       ]
     }
