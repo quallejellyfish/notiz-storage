@@ -358,9 +358,18 @@
       <div class="content-header">
         <div id="content-title"></div>
         <div id="content-date"></div>
+        <div style="margin-bottom: 20px">
+          <button
+            class="btn-secondary"
+            style="width: auto; padding: 8px 15px; font-size: 0.9em"
+            onclick="openSiblingGenerator()"
+          >
+            + Notiz auf gleicher Ebene
+          </button>
+        </div>
+        <div id="content-body" class="content-body"></div>
+        <div id="sub-tile-container" class="sub-tile-container"></div>
       </div>
-      <div id="content-body" class="content-body"></div>
-      <div id="sub-tile-container" class="sub-tile-container"></div>
     </div>
 
     <!-- Grid -->
@@ -686,7 +695,16 @@
       }
 
       // --- GENERATOR LOGIK ---
-      function openGenerator() {
+      function openSiblingGenerator() {
+        if (currentPath.length < 2) return;
+        const parentId = currentPath[currentPath.length - 2];
+        const breadcrumbText = getEl("breadcrumb").innerText;
+        const parts = breadcrumbText.split(" > ");
+        parts.pop();
+        openGenerator(parentId, parts.join(" > "));
+      }
+
+      function openGenerator(forcedParentId = null, displayPath = null) {
         isGeneratorOpen = true;
         getEl("generator-overlay").style.display = "flex";
         getEl("status-msg").innerText = "";
@@ -694,6 +712,15 @@
         uploadedFileName = "";
         getEl("image-preview").style.display = "none";
         getEl("gen-image").value = "";
+
+        if (forcedParentId) {
+          getEl("gen-parent").value = forcedParentId;
+          getEl("gen-parent-display").value = displayPath || "Notiz Storage";
+        } else {
+          const currentFolder = getFolderByPath(currentPath);
+          getEl("gen-parent").value = currentFolder.id;
+          getEl("gen-parent-display").value = getEl("breadcrumb").innerText;
+        }
       }
 
       function closeGenerator() {
@@ -824,21 +851,17 @@
         const backBtn = getEl("back-btn");
         const overlay = getEl("generator-overlay");
 
-        if (toggleGenBtn) toggleGenBtn.onclick = openGenerator;
+        if (toggleGenBtn) toggleGenBtn.onclick = () => openGenerator();
 
-        if (backBtn) {
+        if (backBtn)
           backBtn.onclick = () => {
             currentPath.pop();
             renderScreen();
           };
-        }
-        if (overlay) {
+        if (overlay)
           overlay.addEventListener("click", (e) => {
-            if (e.target === overlay) {
-              closeGenerator();
-            }
+            if (e.target === overlay) closeGenerator();
           });
-        }
 
         loadData();
       });
