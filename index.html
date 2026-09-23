@@ -476,6 +476,31 @@
 
       const getEl = (id) => document.getElementById(id);
 
+      function pathToHash(pathArray) {
+        if (!pathArray || pathArray.length === 0) return "#/";
+        return "#/" + pathArray.map(encodeURIComponent).join("/");
+      }
+
+      function hashToPath(hash) {
+        if (!hash || hash === "#" || hash === "#/") return [];
+        const parts = hash
+          .replace(/^#\/?/, "")
+          .split("/")
+          .filter((p) => p);
+        const validPath = [];
+        let folder = db;
+        for (const id of parts) {
+          if (folder && folder.children) {
+            const child = folder.children.find((c) => c.id === id);
+            if (child) {
+              validPath.push(id);
+              folder = child;
+            } else break;
+          } else break;
+        }
+        return validPath;
+      }
+
       function saveDraft() {
         const typeEl = document.querySelector('input[name="gen-type"]:checked');
         const draft = {
@@ -636,6 +661,7 @@
 
           const res = await fetch("/api/data");
           db = await res.json();
+          currentPath = hashToPath(location.hash);
           renderScreen();
         } catch (err) {
           const pageTitle = getEl("page-title");
@@ -719,8 +745,17 @@
       }
       function navigateTo(id) {
         currentPath.push(id);
+        location.hash = pathToHash(currentPath);
         renderScreen();
       }
+
+      window.addEventListener("hashchange", () => {
+        const newPath = hashToPath(location.hash);
+        if (JSON.stringify(newPath) !== JSON.stringify(currentPath)) {
+          currentPath = newPath;
+          renderScreen();
+        }
+      });
 
       function openGenerator() {
         getEl("generator-overlay").style.display = "flex";
@@ -888,6 +923,7 @@
         getEl("toggle-generator").onclick = openGenerator;
         getEl("back-btn").onclick = () => {
           currentPath.pop();
+          location.hash = pathToHash(currentPath);
           renderScreen();
         };
         getEl("generator-overlay").addEventListener("click", (e) => {
