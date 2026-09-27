@@ -237,7 +237,7 @@ app.put("/api/update", async (req, res) => {
     }
     if (node.children) {
       for (let child of node.children) {
-        if (updateNode(child, targetId, dataToUpdate)) return false;
+        if (updateNode(child, targetId, dataToUpdate)) return true;
       }
     }
   }
