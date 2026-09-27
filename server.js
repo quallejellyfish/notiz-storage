@@ -221,6 +221,41 @@ app.post("/api/add", async (req, res) => {
   }
 });
 
+app.put("/api/update", async (req, res) => {
+  const { id, newData } = req.body;
+
+  if (!id || !newData) {
+    return res.status(400).json({ error: "Ungültige Daten" });
+  }
+  function updateNode(node, targetId, dataToUpdate) {
+    if (node.id === targetId) {
+      node.title = dataToUpdate.title;
+      node.date = dataToUpdate.date;
+      node.content = dataToUpdate.content;
+      node.formattedContent = dataToUpdate.formattedContent;
+      return true;
+    }
+    if (node.children) {
+      for (let child of node.children) {
+        if (updateNode(child, targetId, dataToUpdate)) return false;
+      }
+    }
+  }
+
+  try {
+    const success = updateNode(currentData, id, newData);
+    if (!success)
+      return res.status(404).json({ error: "Notiz nicht gefunden" });
+    await saveDataToGithub(currentData);
+    res.json({ success: true, message: "Notiz erfolgreich aktualisiert" });
+  } catch (err) {
+    console.error(
+      "Update Fehler:",
+      err.message ? err.response.data : err.message,
+    );
+  }
+});
+
 fetchDataFromGithub().then(() => {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => console.log(`Server läuft: ${PORT}`));
