@@ -806,7 +806,7 @@
         let listStack = [];
         let currentIndent = 0;
 
-        lines.forEach((line) => {
+        lines.forEach((rawLine) => {
           let leadingSpaces = rawLine.length - rawLine.trimStart().length;
           let line = rawLine.trim();
 
