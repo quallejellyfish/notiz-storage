@@ -799,7 +799,18 @@
 
       function formatContent(text) {
         if (!text) return "";
-        let safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if (
+          text.includes("<h3>") ||
+          text.includes("<ul>") ||
+          text.includes("<p>")
+        ) {
+          return text;
+        }
+        let processedText = text.replace(/([^\n])(# )/g, "$1\n$2");
+        processedText = processedText.replace(/([^\n])(- )/g, "$1\n$2");
+        let safeText = processedText
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
         const lines = safeText.split("\n");
         let html = "";
         let inList = false;
@@ -918,7 +929,14 @@
           getEl("content-date").innerText = currentFolder.date || "";
           let displayContent = currentFolder.formattedContent;
           if (!displayContent && currentFolder.content) {
-            displayContent = formatContent(currentFolder.content);
+            if (
+              currentFolder.content.includes("<h3>") ||
+              currentFolder.content.includes("<ul>")
+            ) {
+              displayContent = currentFolder.content;
+            } else {
+              displayContent = formatContent(currentFolder.content);
+            }
           }
           getEl("content-body").innerHTML =
             displayContent || "<p>Kein Inhalt.</p>";
@@ -1008,13 +1026,25 @@
 
         let rawContent = currentFolder.content || "";
         if (
-          rawContent.includes("<p>") ||
           rawContent.includes("<h3>") ||
-          rawContent.includes("<ul>")
+          rawContent.includes("<ul>") ||
+          rawContent.includes("<p>")
         ) {
           const tempDiv = document.createElement("div");
           tempDiv.innerHTML = rawContent;
-          rawContent = tempDiv.innerText;
+          let markdown = "";
+          tempDiv.childNodes.forEach((node) => {
+            if (node.nodeName === "H3")
+              markdown += "# " + node.innerText + "\n";
+            else if (node.nodeName === "H4")
+              markdown += "## " + node.innerText + "\n";
+            else if (node.nodeName === "UL") {
+              node
+                .querySelectorAll("li")
+                .forEach((li) => (markdown += "- " + li.innerText + "\n"));
+            } else if (node.nodeName === "P") markdown += node.innerText + "\n";
+          });
+          rawContent = markdown.trim();
         }
         getEl("gen-content").value = rawContent;
 
