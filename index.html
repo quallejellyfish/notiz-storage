@@ -803,35 +803,57 @@
         const lines = safeText.split("\n");
         let html = "";
         let inList = false;
+        let listStack = [];
+        let currentIndent = 0;
 
         lines.forEach((line) => {
-          line = line.trim();
-          if (line.startsWith("# ")) {
-            if (inList) {
+          let leadingSpaces = rawLine.length - rawLine.trimStart().length;
+          let line = rawLine.trim();
+
+          if (line.startsWith("## ")) {
+            while (listStack.length > 0) {
               html += "</ul>";
-              inList = false;
+              listStack.pop();
             }
+            currentIndent = 0;
+            html += `<h4>${line.substring(3)}</h4>`;
+          } else if (line.startsWith("# ")) {
+            while (listStack.length > 0) {
+              html += "</ul>";
+              listStack.pop();
+            }
+            currentIndent = 0;
             html += `<h3>${line.substring(2)}</h3>`;
           } else if (line.startsWith("- ")) {
-            if (!inList) {
-              html += "<ul>";
-              inList = true;
+            let indentLevel = Math.floor(leadingSpaces / 2);
+            if (indentLevel > currentIndent) {
+              for (let i = currentIndent; i < indentLevel; i++) {
+                html += "<ul>";
+                listStack.push(true);
+              }
+            } else if (indentLevel < currentIndent) {
+              for (let i = currentIndent; i > indentLevel; i--) {
+                html += "</ul>";
+                listStack.pop();
+              }
             }
+            currentIndent = indentLevel;
             html += `<li>${line.substring(2)}</li>`;
-          } else if (line === "") {
-            if (inList) {
-              html += "</ul>";
-              inList = false;
-            }
           } else {
-            if (inList) {
+            while (listStack.length > 0) {
               html += "</ul>";
-              inList = false;
+              listStack.pop();
             }
-            html += `<p>${line}</p>`;
+            currentIndent = 0;
+            if (line !== "") {
+              html += `<p>${line}</p>`;
+            }
           }
         });
-        if (inList) html += "</ul>";
+        while (listStack.length > 0) {
+          html += "</ul>";
+          listStack.pop();
+        }
         return html;
       }
 
@@ -894,10 +916,12 @@
 
           getEl("content-title").innerText = currentFolder.title;
           getEl("content-date").innerText = currentFolder.date || "";
+          let displayContent = currentFolder.formattedContent;
+          if (!displayContent && currentFolder.content) {
+            displayContent = formatContent(currentFolder.content);
+          }
           getEl("content-body").innerHTML =
-            currentFolder.formattedContent ||
-            currentFolder.content ||
-            "<p>Kein Inhalt.</p>";
+            displayContent || "<p>Kein Inhalt.</p>";
         } else {
           tileContainer.style.display = "flex";
           contentView.style.display = "none";
