@@ -631,11 +631,11 @@
     <script>
       let db = {};
       let currentPath = [];
-      let isGeneratorOpen = false;
       let uploadedImageBase64 = "";
-
+      let uploadedFileName = "";
+      let editMode = false;
+      let editTargetId = null;
       const MAX_DEPTH = 5;
-
       const getEl = (id) => document.getElementById(id);
 
       function toggleSidebar() {
