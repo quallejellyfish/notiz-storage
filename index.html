@@ -251,6 +251,15 @@
         overflow-wrap: break-word;
       }
 
+      .content-body h4 {
+        color: var(--text-heading);
+        font-size: 1.3em;
+        margin-top: 15px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+      }
+
       .content-body img {
         max-width: 100%;
         height: auto;
@@ -366,6 +375,22 @@
         display: flex;
         gap: 15px;
         margin-top: 10px;
+      }
+
+      .edit-btn {
+        background-color: #f0e6d2;
+        color: var(--text-heading);
+        border: 1px solid var(--border-color);
+        padding: 6px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.5em;
+        margin-left: 10px;
+        transition: all 0.2s;
+        vertical-align: middle;
+      }
+      .edit-btn:hover {
+        background-color: #e0c68b;
       }
 
       .btn-primary,
@@ -494,7 +519,12 @@
     <!-- File View -->
     <div id="content-view" class="content-view">
       <div class="content-header">
-        <div id="content-title"></div>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span id="content-title"></span>
+          <button id="edit-btn" class="edit-btn" onclick="openEditGenerator()">
+            ✏️ Bearbeiten
+          </button>
+        </div>
         <div id="content-date"></div>
       </div>
       <div id="content-body" class="content-body"></div>
@@ -654,6 +684,7 @@
           type: typeEl ? typeEl.value : "folder",
           imageBase64: uploadedImageBase64,
           imageName: uploadedFileName,
+          editTargetId: editTargetId,
           parentId: getEl("gen-parent") ? getEl("gen-parent").value : "root",
         };
         localStorage.setItem("notizStorageDraft", JSON.stringify(draft));
@@ -673,6 +704,12 @@
           if (draft.parentId && draft.parentId !== currentParentId) {
             clearDraft();
             return false;
+          }
+
+          if (editMode) {
+            if (draft.editTargetId !== editTargetId) return false;
+          } else {
+            if (draft.parentId !== currentParentId) return false;
           }
 
           getEl("gen-title").value = draft.title || "";
@@ -858,7 +895,9 @@
           getEl("content-title").innerText = currentFolder.title;
           getEl("content-date").innerText = currentFolder.date || "";
           getEl("content-body").innerHTML =
-            currentFolder.content || "<p>Kein Inhalt.</p>";
+            currentFolder.formattedContent ||
+            currentFolder.content ||
+            "<p>Kein Inhalt.</p>";
         } else {
           tileContainer.style.display = "flex";
           contentView.style.display = "none";
@@ -902,6 +941,10 @@
       });
 
       function openGenerator() {
+        editMode = false;
+        editTargetId = null;
+        getEl("gen-modal-title").innerText = "Was möchtest du erstellen?";
+        getEl("save-btn").innerText = "Erstellen";
         getEl("generator-overlay").style.display = "flex";
         getEl("status-msg").innerText = "";
 
@@ -919,6 +962,43 @@
           ).checked = true;
           toggleTypeFields("folder");
         }
+      }
+
+      function openEditGenerator() {
+        const currentFolder = getFolderByPath(currentPath);
+        if (!currentFolder) return;
+
+        editMode = true;
+        editTargetId = currentFolder.id;
+
+        getEl("gen-modal-title").innerText = "Notiz bearbeiten";
+        getEl("save-btn").innerText = "Aktualisieren";
+        getEl("generator-overlay").style.display = "flex";
+        getEl("status-msg").innerText = "";
+
+        getEl("gen-parent-display").value =
+          "Bearbeiten: " + currentFolder.title;
+        getEl("gen-parent").value = currentFolder.id;
+        getEl("gen-title").value = currentFolder.title;
+        getEl("gen-date").value = currentFolder.date || "";
+
+        let rawContent = currentFolder.content || "";
+        if (
+          rawContent.includes("<p>") ||
+          rawContent.includes("<h3>") ||
+          rawContent.includes("<ul>")
+        ) {
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = rawContent;
+          rawContent = tempDiv.innerText;
+        }
+        getEl("gen-content").value = rawContent;
+
+        document.querySelector('input[name="gen-type"][value="note"]').checked =
+          true;
+        toggleTypeFields("note");
+
+        loadDraft();
       }
 
       function closeGenerator() {
@@ -1032,11 +1112,15 @@
             formattedContent += `<img src="${finalImageUrl}" alt="Hochgeladenes Bild" />`;
 
           if (date) newObj.date = date;
-          newObj.content = formattedContent || "<p>Kein Inhalt.</p>";
+          newObj.content = rawContent;
+          newObj.formattedContent = formattedContent;
         }
 
-        fetch("/api/add", {
-          method: "POST",
+        const endpoint = editMode ? "/api/update" : "/api/add";
+        const method = editMode ? "PUT" : "POST";
+
+        fetch(endpoint, {
+          method: method,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ parentId, newData: newObj }),
         })
