@@ -130,7 +130,8 @@
           "id": "leitwert-1790096284111",
           "title": "Leitwert",
           "date": "7. September 2026",
-          "content": "<h3>Leitwert</h3><ul><li>mit einem kleinen Widerstand leiten den E-Strom gut</li></ul><p>-sie haben einen hohen Leitwert</p><ul><li>demzufolge haben Leiter mit einem hohen Widerstand einen geringen Leitwert</li><li>der Leitwert ist der Kehrwert des Widerstands</li><li>FZ: G</li><li>Maßeinheit: Siemens (S); Oft messen in Millisiemens oder Mikrosiemens</li><li>Formel: G = 1/R oder G = I/U</li></ul><p>Leitwert ist gleich 1 durch Widerstand</p><ul><li>R = 1/G</li></ul><p>Elektrischer Widerstand ist gleicht 1 durch Leitwert</p>"
+          "content": "# Leitwert\n- mit einem kleinen Widerstand leiten den E-Strom gut\n- sie haben einen hohen Leitwert\n- demzufolge haben Leiter mit einem hohen Widerstand einen geringen Leitwert\n- der Leitwert ist der Kehrwert des Widerstands\n- FZ: G\n- Maßeinheit: Siemens (S); Oft messen in Millisiemens oder Mikrosiemens\n- Formel: G = 1/R oder G = I/U\n - Leitwert ist gleich 1 durch Widerstand\n- R = 1/G\n - Elektrischer Widerstand ist gleicht 1 durch Leitwert",
+          "formattedContent": "<h3>Leitwert</h3><li>mit einem kleinen Widerstand leiten den E-Strom gut</li><li>sie haben einen hohen Leitwert</li><li>demzufolge haben Leiter mit einem hohen Widerstand einen geringen Leitwert</li><li>der Leitwert ist der Kehrwert des Widerstands</li><li>FZ: G</li><li>Maßeinheit: Siemens (S); Oft messen in Millisiemens oder Mikrosiemens</li><li>Formel: G = 1/R oder G = I/U</li><li>Leitwert ist gleich 1 durch Widerstand</li><li>R = 1/G</li><li>Elektrischer Widerstand ist gleicht 1 durch Leitwert</li>"
         }
       ]
     }
