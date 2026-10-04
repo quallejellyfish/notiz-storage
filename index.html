@@ -473,7 +473,7 @@
         }
 
         #toggle-generator {
-          display: none;
+          display: none !important;
         }
 
         .generator-panel {
@@ -788,12 +788,17 @@
         ) {
           return text;
         }
-        let processedText = text.replace(/([^\n])(# )/g, "$1\n$2");
-        processedText = processedText.replace(/([^\n])(- )/g, "$1\n$2");
+
+        let processedText = text.replace(/\t/g, "  ");
+
+        processedText = processedText.replace(/([^\n]) - /g, "$1\n- ");
+        processedText = processedText.replace(/([^\n]) # /g, "$1\n# ");
+
         let safeText = processedText
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;");
         const lines = safeText.split("\n");
+
         let html = "";
         let listStack = [];
         let currentIndent = 0;
