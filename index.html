@@ -33,7 +33,6 @@
         align-items: center;
         min-height: 100vh;
       }
-
       .top-nav {
         width: 100%;
         max-width: 1000px;
@@ -44,7 +43,6 @@
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 15px;
       }
-
       .back-btn {
         font-size: 1em;
         background-color: var(--btn-bg);
@@ -62,7 +60,6 @@
         background-color: var(--btn-hover);
         transform: translateY(-2px);
       }
-
       h1 {
         margin: 0;
         text-align: center;
@@ -77,6 +74,18 @@
         margin-top: 5px;
         text-align: center;
       }
+      .crumb {
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+      .crumb:hover {
+        color: var(--text-heading);
+        text-decoration: underline;
+      }
+      .crumb-sep {
+        color: var(--text-subtitle);
+        margin: 0 5px;
+      }
 
       .burger-btn {
         display: none;
@@ -88,7 +97,6 @@
         padding: 0 10px;
         line-height: 1;
       }
-
       .sidebar-overlay {
         display: none;
         position: fixed;
@@ -238,7 +246,6 @@
         box-sizing: border-box;
         margin-bottom: 20px;
       }
-
       .content-header {
         display: flex;
         justify-content: space-between;
@@ -248,7 +255,33 @@
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--text-heading);
+        flex-wrap: wrap;
+        gap: 15px;
       }
+      #content-title {
+        flex: 1;
+        min-width: 250px;
+      }
+      .content-meta {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .edit-btn {
+        background-color: #f0e6d2;
+        color: var(--text-heading);
+        border: 1px solid var(--border-color);
+        padding: 6px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.5em;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .edit-btn:hover {
+        background-color: #e0c68b;
+      }
+
       .content-body {
         font-size: 1.1em;
         line-height: 1.6;
@@ -256,6 +289,14 @@
         margin-bottom: 30px;
         word-wrap: break-word;
         overflow-wrap: break-word;
+      }
+      .content-body h4 {
+        color: var(--text-heading);
+        font-size: 1.3em;
+        margin-top: 15px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
       }
       .content-body ul {
         padding-left: 20px;
@@ -271,15 +312,6 @@
       .content-body ul ul ul {
         list-style-type: square;
       }
-      .content-body h4 {
-        color: var(--text-heading);
-        font-size: 1.3em;
-        margin-top: 15px;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 5px;
-      }
-
       .content-body img {
         max-width: 100%;
         height: auto;
@@ -300,7 +332,6 @@
         justify-content: center;
         z-index: 1000;
       }
-
       .generator-panel {
         background: var(--box-bg);
         width: 90%;
@@ -313,7 +344,6 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         box-sizing: border-box;
       }
-
       .generator-panel h3 {
         margin-top: 0;
         margin-bottom: 20px;
@@ -323,11 +353,9 @@
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 15px;
       }
-
       .form-group {
         margin-bottom: 20px;
       }
-
       .form-group label {
         font-size: 1em;
         color: var(--text-subtitle);
@@ -335,7 +363,6 @@
         margin-bottom: 8px;
         font-weight: bold;
       }
-
       .form-group input,
       .form-group textarea,
       .form-group select {
@@ -346,31 +373,26 @@
         border-radius: 6px;
         font-size: 1em;
       }
-
       .form-group input[type="file"] {
         border: 1px dashed var(--border-color);
         background: #fdfbf7;
         padding: 15px;
         cursor: pointer;
       }
-
       .form-group textarea {
         resize: vertical;
         min-height: 150px;
       }
-
       .hint-text {
         font-size: 0.85em;
         color: #888;
         margin-top: 5px;
       }
-
       .type-selector {
         display: flex;
         gap: 15px;
         margin-bottom: 20px;
       }
-
       .type-option {
         flex: 1;
         padding: 15px;
@@ -380,39 +402,19 @@
         cursor: pointer;
         transition: all 0.2s;
       }
-
       .type-option.active {
         border-color: var(--btn-bg);
         background-color: #fdfbf7;
         box-shadow: 0 0 0 2px var(--border-color);
       }
-
       .type-option input {
         display: none;
       }
-
       .generator-actions {
         display: flex;
         gap: 15px;
         margin-top: 10px;
       }
-
-      .edit-btn {
-        background-color: #f0e6d2;
-        color: var(--text-heading);
-        border: 1px solid var(--border-color);
-        padding: 6px 12px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.5em;
-        margin-left: 10px;
-        transition: all 0.2s;
-        vertical-align: middle;
-      }
-      .edit-btn:hover {
-        background-color: #e0c68b;
-      }
-
       .btn-primary,
       .btn-secondary {
         flex: 1;
@@ -424,25 +426,20 @@
         font-weight: bold;
         transition: background-color 0.3s;
       }
-
       .btn-primary {
         background-color: var(--btn-bg);
         color: white;
       }
-
       .btn-primary:hover {
         background-color: var(--btn-hover);
       }
-
       .btn-secondary {
         background-color: #ddd;
         color: #333;
       }
-
       .btn-secondary:hover {
         background-color: #ccc;
       }
-
       .image-preview {
         max-width: 100%;
         max-height: 200px;
@@ -451,13 +448,11 @@
         display: none;
         border: 1px solid var(--border-color);
       }
-
       .status-msg {
         margin-top: 15px;
         text-align: center;
         font-weight: bold;
       }
-
       .hidden {
         display: none !important;
       }
@@ -491,11 +486,9 @@
           width: 100%;
           font-size: 0.9em;
         }
-
         #toggle-generator {
-          display: none !important;
+          display: none;
         }
-
         .generator-panel {
           padding: 20px;
         }
@@ -506,6 +499,13 @@
           font-size: 1.4em;
           flex-direction: column;
           align-items: flex-start;
+        }
+        .content-meta {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .edit-btn {
+          font-size: 0.6em;
         }
       }
     </style>
@@ -808,12 +808,9 @@
         ) {
           return text;
         }
-
         let processedText = text.replace(/\t/g, " ");
-
         processedText = processedText.replace(/([^\n]) - /g, "$1\n- ");
         processedText = processedText.replace(/([^\n]) # /g, "$1\n# ");
-
         let safeText = processedText
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;");
@@ -843,7 +840,6 @@
             html += `<h3>${line.substring(2)}</h3>`;
           } else if (line.startsWith("- ")) {
             let indentLevel = leadingSpaces;
-
             if (indentLevel > currentIndent) {
               for (let i = currentIndent; i < indentLevel; i++) {
                 html += "<ul>";
@@ -855,12 +851,10 @@
                 listStack.pop();
               }
             }
-
             if (listStack.length === 0) {
               html += "<ul>";
               listStack.push(true);
             }
-
             currentIndent = indentLevel;
             html += `<li>${line.substring(2)}</li>`;
           } else {
@@ -905,6 +899,12 @@
         return folder || db;
       }
 
+      function navigateToPath(pathArray) {
+        currentPath = [...pathArray];
+        location.hash = pathToHash(currentPath);
+        renderScreen();
+      }
+
       function renderScreen() {
         const tileContainer = getEl("tile-container");
         const contentView = getEl("content-view");
@@ -918,16 +918,33 @@
         backBtn.style.display = currentPath.length > 0 ? "block" : "none";
 
         let currentFolder = getFolderByPath(currentPath);
-        let pathTitles = ["Notiz Storage"];
-        let tempFolder = db;
-        for (let id of currentPath) {
-          if (tempFolder.children) {
-            tempFolder = tempFolder.children.find((c) => c.id === id);
-            if (tempFolder) pathTitles.push(tempFolder.title);
-          }
+
+        breadcrumb.innerHTML = "";
+        const homeSpan = document.createElement("span");
+        homeSpan.className = "crumb";
+        homeSpan.innerText = "Notiz Storage";
+        homeSpan.onclick = () => navigateToPath([]);
+        breadcrumb.appendChild(homeSpan);
+
+        let tempPath = [];
+        for (let i = 0; i < currentPath.length; i++) {
+          tempPath.push(currentPath[i]);
+          const folder = getFolderByPath(tempPath);
+
+          const sep = document.createElement("span");
+          sep.className = "crumb-sep";
+          sep.innerText = " > ";
+          breadcrumb.appendChild(sep);
+
+          const crumbSpan = document.createElement("span");
+          crumbSpan.className = "crumb";
+          crumbSpan.innerText = folder.title;
+
+          const pathToGo = [...tempPath];
+          crumbSpan.onclick = () => navigateToPath(pathToGo);
+          breadcrumb.appendChild(crumbSpan);
         }
 
-        breadcrumb.innerText = pathTitles.join(" > ");
         pageTitle.innerText =
           currentPath.length === 0 ? "Notiz Storage" : currentFolder.title;
 
@@ -957,7 +974,7 @@
           contentView.style.display = "none";
           toggleGenBtn.style.display = "block";
           getEl("gen-parent-display").value =
-            pathTitles.join(" > ") || "Notiz Storage";
+            breadcrumb.innerText || "Notiz Storage";
           getEl("gen-parent").value = currentFolder.id;
 
           if (currentFolder.children && currentFolder.children.length > 0) {
