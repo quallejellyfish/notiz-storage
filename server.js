@@ -22,9 +22,7 @@ async function fetchDataFromGithub() {
     const response = await axios.get(url, {
       headers: { Authorization: `token ${GITHUB_TOKEN}` },
     });
-    const content = Buffer.from(response.data.content, "base64").toString(
-      "utf8",
-    );
+    const content = Buffer.from(response.data.content, "base64").toString("utf8");
     currentData = JSON.parse(content);
     console.log("Github Daten geladen");
   } catch (err) {
@@ -39,9 +37,8 @@ async function saveDataToGithub(newData) {
     headers: { Authorization: `token ${GITHUB_TOKEN}` },
   });
   const sha = getResponse.data.sha;
-  const contentBase64 = Buffer.from(JSON.stringify(newData, null, 2)).toString(
-    "base64",
-  );
+  const contentBase64 = Buffer.from(JSON.stringify(newData, null, 2)).toString("base64");
+
   await axios.put(
     url,
     {
@@ -52,7 +49,7 @@ async function saveDataToGithub(newData) {
     },
     {
       headers: { Authorization: `token ${GITHUB_TOKEN}` },
-    },
+    }
   );
 
   currentData = newData;
@@ -73,10 +70,9 @@ app.get("/api/image/:filename", async (req, res) => {
         Authorization: `token ${GITHUB_TOKEN}`,
         Accept: "application/vnd.github.v3.raw",
       },
-      responseType: "arraybuffer", // Important: Get raw binary data
+      responseType: "arraybuffer",
     });
 
-    // Determine the correct content type
     const ext = filename.split(".").pop().toLowerCase();
     let contentType = "image/png";
     if (ext === "jpg" || ext === "jpeg") contentType = "image/jpeg";
@@ -94,8 +90,7 @@ app.get("/api/image/:filename", async (req, res) => {
 
 app.post("/api/upload", async (req, res) => {
   const { imageData, filename } = req.body;
-  if (!imageData)
-    return res.status(400).json({ error: "Keine Bilddaten übermittelt." });
+  if (!imageData) return res.status(400).json({ error: "Keine Bilddaten übermittelt." });
 
   const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
   const uniqueFilename = `${Date.now()}-${filename.replace(/[^a-z0-9.]/gi, "_")}`;
@@ -106,7 +101,7 @@ app.post("/api/upload", async (req, res) => {
     try {
       await axios.get(
         `https://api.github.com/repos/${GITHUB_REPO}/contents/images?ref=${GITHUB_BRANCH}`,
-        { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
+        { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
       );
     } catch (e) {
       if (e.response && e.response.status === 404) {
@@ -118,7 +113,7 @@ app.post("/api/upload", async (req, res) => {
             content: Buffer.from("").toString("base64"),
             branch: GITHUB_BRANCH,
           },
-          { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
+          { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
         );
       }
     }
@@ -130,20 +125,15 @@ app.post("/api/upload", async (req, res) => {
         content: base64Data,
         branch: GITHUB_BRANCH,
       },
-      { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
+      { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
     );
 
     const proxyUrl = `/api/image/${uniqueFilename}`;
     console.log("Bild hochgeladen:", proxyUrl);
     res.json({ success: true, url: proxyUrl });
   } catch (error) {
-    console.error(
-      "Bild Upload Fehler:",
-      error.response ? error.response.data : error.message,
-    );
-    res
-      .status(500)
-      .json({ error: "Fehler beim Hochladen des Bildes zu GitHub." });
+    console.error("Bild Upload Fehler:", error.response ? error.response.data : error.message);
+    res.status(500).json({ error: "Fehler beim Hochladen des Bildes zu GitHub." });
   }
 });
 
@@ -163,24 +153,21 @@ app.post("/api/add", async (req, res) => {
   if (!parentId || typeof parentId !== "string") {
     return res.status(400).json({ error: "Ungültige Parent ID." });
   }
-  if (
-    !newData ||
-    typeof newData !== "object" ||
-    !newData.title ||
-    !newData.id
-  ) {
-    return res
-      .status(400)
-      .json({ error: "Ungültige Datenstruktur übermittelt." });
+  if (!newData || typeof newData !== "object" || !newData.title || !newData.id) {
+    return res.status(400).json({ error: "Ungültige Datenstruktur übermittelt." });
   }
 
   newData.title = newData.title.trim().substring(0, 100);
   if (newData.date) newData.date = newData.date.trim().substring(0, 50);
   if (newData.content) newData.content = newData.content.substring(0, 8000000);
+  if (newData.formattedContent) newData.formattedContent = newData.formattedContent.substring(0, 8000000);
 
   if (idExists(currentData, newData.id)) {
     return res.status(400).json({ error: "Diese ID existiert bereits." });
   }
+
+  const originalDataString = JSON.stringify(currentData);
+
   function addChildToTree(node, targetId, dataToAdd) {
     if (node.id === targetId) {
       if (!node.children) node.children = [];
@@ -194,7 +181,7 @@ app.post("/api/add", async (req, res) => {
       }
       dataToAdd.title = newTitle;
 
-      node.children.push(newData);
+      node.children.push(dataToAdd);
       return true;
     }
     if (node.children) {
@@ -204,19 +191,19 @@ app.post("/api/add", async (req, res) => {
     }
     return false;
   }
+
   try {
     const success = addChildToTree(currentData, parentId, newData);
     if (!success) return res.status(404).json({ error: "Parent ID not found" });
+
+    if (JSON.stringify(currentData) === originalDataString) {
+      return res.json({ success: true, message: "Keine Änderungen vorgenommen" });
+    }
+
     await saveDataToGithub(currentData);
-    res.json({
-      success: true,
-      message: "Daten wurden hinzugefügt und gespeichert",
-    });
+    res.json({ success: true, message: "Daten wurden hinzugefügt und gespeichert" });
   } catch (err) {
-    console.error(
-      "Speicherungsfehler:",
-      err.response ? err.response.data : err.message,
-    );
+    console.error("Speicherungsfehler:", err.response ? err.response.data : err.message);
     res.status(500).json({ error: "Fehler bei der Speicherung nach GitHub" });
   }
 });
@@ -227,6 +214,9 @@ app.put("/api/update", async (req, res) => {
   if (!id || !newData) {
     return res.status(400).json({ error: "Ungültige Daten" });
   }
+
+  const originalDataString = JSON.stringify(currentData);
+
   function updateNode(node, targetId, dataToUpdate) {
     if (node.id === targetId) {
       node.title = dataToUpdate.title;
@@ -240,19 +230,22 @@ app.put("/api/update", async (req, res) => {
         if (updateNode(child, targetId, dataToUpdate)) return true;
       }
     }
+    return false;
   }
 
   try {
     const success = updateNode(currentData, id, newData);
-    if (!success)
-      return res.status(404).json({ error: "Notiz nicht gefunden" });
+    if (!success) return res.status(404).json({ error: "Notiz nicht gefunden" });
+
+    if (JSON.stringify(currentData) === originalDataString) {
+      return res.json({ success: true, message: "Keine Änderungen vorgenommen" });
+    }
+
     await saveDataToGithub(currentData);
     res.json({ success: true, message: "Notiz erfolgreich aktualisiert" });
   } catch (err) {
-    console.error(
-      "Update Fehler:",
-      err.message ? err.response.data : err.message,
-    );
+    console.error("Update Fehler:", err.response ? err.response.data : err.message);
+    res.status(500).json({ error: "Fehler beim Update auf GitHub." });
   }
 });
 
