@@ -134,6 +134,13 @@
           "formattedContent": "<h3>Leitwert</h3><li>mit einem kleinen Widerstand leiten den E-Strom gut</li><li>sie haben einen hohen Leitwert</li><li>demzufolge haben Leiter mit einem hohen Widerstand einen geringen Leitwert</li><li>der Leitwert ist der Kehrwert des Widerstands</li><li>FZ: G</li><li>Maßeinheit: Siemens (S); Oft messen in Millisiemens oder Mikrosiemens</li><li>Formel: G = 1/R oder G = I/U</li><li>Leitwert ist gleich 1 durch Widerstand</li><li>R = 1/G</li><li>Elektrischer Widerstand ist gleicht 1 durch Leitwert</li>"
         }
       ]
+    },
+    {
+      "id": "-bung-1793628641324",
+      "title": "Übung",
+      "date": "2. November 2026",
+      "content": "",
+      "formattedContent": "<img src=\"/api/image/1793628645813-image_1_.png\" alt=\"Hochgeladenes Bild\" />"
     }
   ]
 }
